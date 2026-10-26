@@ -11,6 +11,9 @@ import { OneCommeClient } from "./infra/onecomme_client";
 import { YouTubeClient } from "./infra/youtube_client";
 import { PLUGIN_UID } from "./plugin_uid";
 
+// ビルド時に package.json の version が入る（scripts/build.mjs）
+declare const PLUGIN_VERSION: string;
+
 const SETTINGS_KEY = "settings";
 
 // わんコメが渡す ElectronStore のうち、使う部分だけ
@@ -118,7 +121,7 @@ async function handle(req: PluginRequest): Promise<PluginResponse> {
 const plugin = {
   name: "YouTube 配信 URL 自動セット（非公式）",
   uid: PLUGIN_UID,
-  version: "0.2.0",
+  version: PLUGIN_VERSION,
   author: "りーと",
   url: `http://localhost:11180/plugins/${PLUGIN_UID}/index.html`,
   permissions: [] as string[],

@@ -146,10 +146,14 @@ API キー方式では公開の動画しか見えず、限定公開・非公開�
 - [ ] わんコメが限定公開の配信のチャットを `watch?v=` で読めるか
 - [ ] メン限の配信（わんコメ 側のログインが要る可能性）
 
-## 10. 配布に向けて（後で）
+## 10. 配布【決定 2026-10-27】
 
-- ライセンスを決める
-- README: API キーの発行手順、免責（わんコメ・YouTube とは無関係の非公式ツール）
-- YouTube API サービス利用規約・Google のプライバシーポリシーへの同意・リンク表記の要否を確認
-- わんコメ公式と誤解されない名前（わんコメのロゴは使わない）
-- 依存パッケージ候補（未導入・要相談）: typescript / esbuild / vitest（いずれも開発用で配布物に入らない）。`@onecomme.com/onesdk` はライセンスが独自（OneComme-Use-Only）なので使わず、必要な型は自分で書く
+- ライセンス: MIT（`LICENSE`）。GPL のコードは含まない
+- 配布: 無料（BOOTH の無料配布・GitHub Releases など）
+- 配布物: `npm run package` → `dist/yt-live-autoset-<version>.zip` と `.sha256`。中身は プラグインフォルダ・README.md・LICENSE
+  - コミットしていない変更があると作らない。型チェック・テストを通してから作る
+  - ビルド時に、配布物に第三者のコード（node_modules）が入っていないことを確かめる（入れるなら THIRD_PARTY_NOTICES が要る）
+- バージョンは `package.json` の `version` だけを書き換える（ビルドで plugin.js に入る）
+- 名前は「YouTube 配信 URL 自動セット（非公式）」。わんコメ・YouTube のロゴは使わない。README に非公式・無関係・免責・YouTube 利用規約と Google プライバシーポリシーへのリンクを書いた
+- 開発用依存（typescript / esbuild / vitest / @types/node）は配布物に入らない
+- `state.json`（設定・秘密の値）は配布 zip に入れない。上書き更新しても残る
