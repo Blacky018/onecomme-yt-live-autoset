@@ -3,22 +3,15 @@ import { LiveWatcher, MAX_BACKOFF_SEC, QUOTA_WAIT_SEC, type LiveFinder, type Ser
 import { err, ok, type Result } from "../src/domain/result";
 import { DEFAULT_SETTINGS, type Settings } from "../src/domain/settings";
 import type { OneCommeError, OneCommeService } from "../src/infra/onecomme_client";
-import type { YouTubeError } from "../src/infra/youtube_client";
+import type { SourceError } from "../src/app/live_source";
 
 const CONFIGURED: Settings = { ...DEFAULT_SETTINGS, apiKey: "AIzaKEY", channel: "@me", serviceId: "svc-1", intervalSec: 60 };
 
 class FakeYouTube implements LiveFinder {
-  live: Result<string | null, YouTubeError> = ok(null);
-  channel: Result<{ channelId: string; uploadsPlaylistId: string }, YouTubeError> = ok({ channelId: "UCx", uploadsPlaylistId: "UUx" });
-  resolveCalls = 0;
+  live: Result<string | null, SourceError> = ok(null);
   findCalls = 0;
-  async resolveChannel() {
-    this.resolveCalls += 1;
-    return this.channel;
-  }
-  async findLiveVideo(playlist: string) {
+  async findLive() {
     this.findCalls += 1;
-    expect(playlist).toBe("UUx");
     return this.live;
   }
 }
@@ -132,19 +125,24 @@ describe("LiveWatcher", () => {
     expect((await watcher.checkNow()).message).toContain("枠が見つかりません");
   });
 
-  it("チャンネル情報は入力が変わるまで使い回す", async () => {
+  it("設定を変えたら次の確認から新しい設定を使う", async () => {
     const { yt, watcher, setSettings } = setup();
-    await watcher.checkNow();
-    await watcher.checkNow();
-    expect(yt.resolveCalls).toBe(1);
-    setSettings({ ...CONFIGURED, channel: "@other" });
-    await watcher.checkNow();
-    expect(yt.resolveCalls).toBe(2);
+    setSettings({ ...CONFIGURED, serviceId: "" });
+    expect((await watcher.checkNow()).state).toBe("needs-config");
+    setSettings(CONFIGURED);
+    expect((await watcher.checkNow()).state).toBe("waiting");
+    expect(yt.findCalls).toBe(1);
+  });
+
+  it("ログイン切れは再ログインを促す", async () => {
+    const { yt, watcher } = setup();
+    yt.live = err<SourceError>("auth-required");
+    expect((await watcher.checkNow()).message).toContain("ログイン");
   });
 
   it("失敗が続くと間隔を延ばす（上限あり）", async () => {
     const { yt, timers, watcher } = setup();
-    yt.live = err<YouTubeError>("network");
+    yt.live = err<SourceError>("network");
     watcher.start();
     timers.scheduled = [];
     for (let i = 0; i < 6; i++) await watcher.checkNow();
@@ -153,7 +151,7 @@ describe("LiveWatcher", () => {
 
   it("成功したら通常の間隔に戻る", async () => {
     const { yt, timers, watcher } = setup();
-    yt.live = err<YouTubeError>("server");
+    yt.live = err<SourceError>("server");
     watcher.start();
     await watcher.checkNow();
     yt.live = ok(null);
@@ -164,7 +162,7 @@ describe("LiveWatcher", () => {
 
   it("quota 超過なら 1 時間待つ", async () => {
     const { yt, timers, watcher } = setup();
-    yt.live = err<YouTubeError>("quota");
+    yt.live = err<SourceError>("quota");
     watcher.start();
     timers.scheduled = [];
     const st = await watcher.checkNow();
@@ -174,7 +172,7 @@ describe("LiveWatcher", () => {
 
   it("API キーをログやメッセージに出さない", async () => {
     const { yt, logs, watcher } = setup();
-    yt.live = err<YouTubeError>("bad-key");
+    yt.live = err<SourceError>("bad-key");
     const st = await watcher.checkNow();
     yt.live = ok("liveNow0001");
     await watcher.checkNow();
@@ -192,7 +190,7 @@ describe("LiveWatcher", () => {
 
   it("想定外の例外でも落ちずにエラー状態になる", async () => {
     const { yt, watcher } = setup();
-    yt.findLiveVideo = async () => {
+    yt.findLive = async () => {
       throw new Error("boom");
     };
     expect((await watcher.checkNow()).state).toBe("error");

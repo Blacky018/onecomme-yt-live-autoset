@@ -1,14 +1,11 @@
-import { parseChannelInput, type ChannelRef } from "../domain/channel";
 import type { Result } from "../domain/result";
-import type { Settings } from "../domain/settings";
+import { missingConfig, type Settings } from "../domain/settings";
 import { extractVideoId, watchUrl } from "../domain/video_url";
-import type { ChannelInfo } from "../domain/youtube_parse";
 import type { OneCommeError, OneCommeService } from "../infra/onecomme_client";
-import type { YouTubeError } from "../infra/youtube_client";
+import type { SourceError } from "./live_source";
 
 export interface LiveFinder {
-  resolveChannel(ref: ChannelRef): Promise<Result<ChannelInfo, YouTubeError>>;
-  findLiveVideo(uploadsPlaylistId: string): Promise<Result<string | null, YouTubeError>>;
+  findLive(s: Settings): Promise<Result<string | null, SourceError>>;
 }
 
 export interface ServiceStore {
@@ -37,7 +34,7 @@ export const QUOTA_WAIT_SEC = 3600;
 // 接続中の枠の URL を変えたあと、つなぎ直すまでの待ち時間
 export const RECONNECT_GAP_MS = 1500;
 
-const YOUTUBE_ERROR_MESSAGE: Record<YouTubeError, string> = {
+const SOURCE_ERROR_MESSAGE: Record<SourceError, string> = {
   quota: "YouTube API の 1 日の利用上限に達しました。1 時間後にもう一度試します",
   "bad-key": "API キーが正しくありません",
   "api-disabled": "この API キーのプロジェクトで YouTube Data API v3 が有効になっていません",
@@ -46,6 +43,12 @@ const YOUTUBE_ERROR_MESSAGE: Record<YouTubeError, string> = {
   network: "YouTube に接続できませんでした",
   "bad-response": "YouTube から想定外の応答がありました",
   "channel-not-found": "チャンネルが見つかりません",
+  "bad-channel": "チャンネルの指定が正しくありません",
+  unauthorized: "YouTube API の認証に失敗しました",
+  "auth-required": "Google のログインが切れました。設定画面でもう一度ログインしてください",
+  "bad-client": "OAuth クライアント ID かシークレットが正しくありません",
+  "token-network": "Google に接続できませんでした",
+  "token-other": "Google のログイン情報を更新できませんでした",
   other: "YouTube API でエラーが起きました",
 };
 
@@ -81,12 +84,11 @@ export class LiveWatcher {
   private running = false;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
-  private channelCache: { input: string; info: ChannelInfo } | null = null;
   private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, checkedAt: null };
 
   constructor(
     private readonly settings: () => Settings,
-    private readonly youtube: LiveFinder,
+    private readonly source: LiveFinder,
     private readonly onecomme: ServiceStore,
     private readonly timers: Timers,
     private readonly log: (msg: string) => void,
@@ -155,13 +157,11 @@ export class LiveWatcher {
   private async step(): Promise<void> {
     const s = this.settings();
     if (!s.enabled) return this.setStatus("needs-config", "自動セットはオフです", null);
-    if (s.apiKey === "" || s.channel === "" || s.serviceId === "") {
-      return this.setStatus("needs-config", "API キー・チャンネル・書き換える枠を設定してください", null);
-    }
+    const missing = missingConfig(s);
+    if (missing !== null) return this.setStatus("needs-config", missing, null);
 
-    const info = await this.channelInfo(s.channel);
-    const live = await this.youtube.findLiveVideo(info.uploadsPlaylistId);
-    if (!live.ok) throw this.youtubeError(live.error);
+    const live = await this.source.findLive(s);
+    if (!live.ok) throw this.sourceError(live.error);
     if (live.value === null) return this.setStatus("waiting", "配信中の枠はありません（配信開始を待っています）", null);
     const videoId = live.value;
 
@@ -190,17 +190,7 @@ export class LiveWatcher {
     this.setStatus("set", "配信中の枠をセットしました", videoId);
   }
 
-  private async channelInfo(input: string): Promise<ChannelInfo> {
-    if (this.channelCache?.input === input) return this.channelCache.info;
-    const ref = parseChannelInput(input);
-    if (!ref.ok) throw new StepError("チャンネルの指定が正しくありません");
-    const r = await this.youtube.resolveChannel(ref.value);
-    if (!r.ok) throw this.youtubeError(r.error);
-    this.channelCache = { input, info: r.value };
-    return r.value;
-  }
-
-  private youtubeError(kind: YouTubeError): StepError {
-    return new StepError(YOUTUBE_ERROR_MESSAGE[kind], kind === "quota" ? QUOTA_WAIT_SEC : null);
+  private sourceError(kind: SourceError): StepError {
+    return new StepError(SOURCE_ERROR_MESSAGE[kind], kind === "quota" ? QUOTA_WAIT_SEC : null);
   }
 }

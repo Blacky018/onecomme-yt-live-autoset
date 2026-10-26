@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { classifyApiError, parseChannelsResponse, parsePlaylistItems, pickLiveVideo } from "../src/domain/youtube_parse";
+import { classifyApiError, parseChannelsResponse, parsePlaylistItems, pickLiveBroadcast, pickLiveVideo } from "../src/domain/youtube_parse";
 
 // フィクスチャは 2026-10-26 の実レスポンスの形をもとに、ID・タイトルをダミーにしたもの
 const fixture = (name: string): unknown =>
@@ -62,6 +62,22 @@ describe("pickLiveVideo", () => {
   });
 });
 
+describe("pickLiveBroadcast", () => {
+  it("開始済みの枠を選ぶ（限定公開でも・テスト中の枠は除く）", () => {
+    expect(pickLiveBroadcast(fixture("broadcasts_active.json"))).toEqual({ ok: true, value: "unlisted001" });
+  });
+  it("終了済みは除く", () => {
+    const r = pickLiveBroadcast({ items: [{ id: "ended000001", snippet: { actualStartTime: "2026-10-27T01:00:00Z", actualEndTime: "2026-10-27T02:00:00Z" } }] });
+    expect(r).toEqual({ ok: true, value: null });
+  });
+  it("items がなければ null", () => {
+    expect(pickLiveBroadcast({ kind: "youtube#liveBroadcastListResponse" })).toEqual({ ok: true, value: null });
+  });
+  it.each([null, [], { items: "x" }])("壊れた入力 %j", (input) => {
+    expect(pickLiveBroadcast(input).ok).toBe(false);
+  });
+});
+
 describe("classifyApiError", () => {
   const body = (reason: string) => ({ error: { code: 403, errors: [{ reason }] } });
   it.each([
@@ -71,6 +87,8 @@ describe("classifyApiError", () => {
     [400, { error: { errors: [{ reason: "badRequest" }], message: "API key not valid. Please pass a valid API key." } }, "bad-key"],
     [403, body("accessNotConfigured"), "api-disabled"],
     [403, body("forbidden"), "forbidden"],
+    [401, { error: { code: 401, errors: [{ reason: "authError" }] } }, "unauthorized"],
+    [403, body("liveStreamingNotEnabled"), "forbidden"],
     [500, null, "server"],
     [404, "nope", "other"],
   ] as const)("%d %j → %s", (status, b, kind) => {

@@ -23,13 +23,38 @@
           <span>自動セットを使う</span>
         </label>
 
-        <label for="apiKey">YouTube Data API キー</label>
-        <input type="password" id="apiKey" spellcheck="false" />
-        <p class="hint" id="apiKey-hint">Google Cloud で発行したキー。保存後は画面に表示されません。</p>
-        <label class="inline"><input type="checkbox" id="clearApiKey" /> 保存済みのキーを消す</label>
+        <fieldset class="mode">
+          <legend>配信の探し方</legend>
+          <label class="inline"><input type="radio" name="authMode" value="oauth" id="mode-oauth" /> Google ログイン（限定公開・メン限も見つけられる）</label>
+          <label class="inline"><input type="radio" name="authMode" value="apiKey" id="mode-apiKey" /> API キー（公開の配信のみ）</label>
+        </fieldset>
 
-        <label for="channel">チャンネル</label>
-        <input type="text" id="channel" placeholder="@ハンドル または チャンネル URL" spellcheck="false" />
+        <div id="section-oauth">
+          <label for="oauthClientId">OAuth クライアント ID</label>
+          <input type="text" id="oauthClientId" placeholder="xxxx.apps.googleusercontent.com" spellcheck="false" />
+          <label for="oauthClientSecret">OAuth クライアント シークレット</label>
+          <input type="password" id="oauthClientSecret" spellcheck="false" />
+          <p class="hint">Google Cloud で作った「デスクトップ アプリ」の OAuth クライアント。保存後は画面に表示されません。</p>
+          <label class="inline" id="clearSecret-row"><input type="checkbox" id="clearOauthClientSecret" /> 保存済みのシークレットを消す</label>
+          <div class="login-row">
+            <span class="badge" id="login-badge">未ログイン</span>
+            <button type="button" id="oauth-login" class="sub">Google でログイン</button>
+            <button type="button" id="oauth-logout" class="sub">ログアウト</button>
+          </div>
+          <p class="hint" id="login-message"></p>
+          <p class="hint"><a id="auth-link" target="_blank" rel="noopener noreferrer" hidden>ログイン画面が開かない場合はここを押す</a></p>
+          <p class="hint">ID とシークレットを保存してから「Google でログイン」を押してください。許可は「YouTube の閲覧」だけです。</p>
+        </div>
+
+        <div id="section-apiKey">
+          <label for="apiKey">YouTube Data API キー</label>
+          <input type="password" id="apiKey" spellcheck="false" />
+          <p class="hint" id="apiKey-hint">Google Cloud で発行したキー。保存後は画面に表示されません。</p>
+          <label class="inline" id="clearApiKey-row"><input type="checkbox" id="clearApiKey" /> 保存済みのキーを消す</label>
+
+          <label for="channel">チャンネル</label>
+          <input type="text" id="channel" placeholder="@ハンドル または チャンネル URL" spellcheck="false" />
+        </div>
 
         <label for="serviceId">書き換えるわんコメの枠</label>
         <div class="row">
@@ -40,7 +65,7 @@
 
         <label for="intervalSec">確認する間隔（秒、60 以上）</label>
         <input type="number" id="intervalSec" min="60" max="3600" step="1" />
-        <p class="hint">1 回の確認で YouTube API の利用枠を 2 使います（60 秒ごとで 1 日 2,880 / 上限 10,000）。</p>
+        <p class="hint">YouTube API の 1 日の上限は 10,000。60 秒ごとの確認で、Google ログインは 1 日 1,440、API キーは 2,880 使います。</p>
 
         <div class="actions">
           <button type="submit" id="save">保存</button>
@@ -50,7 +75,7 @@
       </form>
 
       <footer>
-        <p>公開の配信のみ対象です（限定公開の枠は見つけられません）。</p>
+        <p>API キー方式は公開の配信のみ対象です。限定公開・メン限は Google ログイン方式を使ってください。</p>
       </footer>
     </main>
     <script src="./settings.js"></script>

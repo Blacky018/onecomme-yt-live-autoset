@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS, MIN_INTERVAL_SEC, applySettingsPatch, loadSettings, publicSettings } from "../src/domain/settings";
+import {
+  DEFAULT_SETTINGS,
+  MIN_INTERVAL_SEC,
+  applySettingsPatch,
+  loadSettings,
+  missingConfig,
+  publicSettings,
+  type Settings,
+} from "../src/domain/settings";
+
+const CLIENT = "123-abc.apps.googleusercontent.com";
 
 describe("applySettingsPatch", () => {
-  const base = { ...DEFAULT_SETTINGS, apiKey: "AIzaOLDKEY", channel: "@old" };
+  const base: Settings = { ...DEFAULT_SETTINGS, apiKey: "AIzaOLDKEY", channel: "@old" };
 
   it("渡した項目だけ変える", () => {
     const r = applySettingsPatch(base, { channel: " @new ", intervalSec: 120 });
@@ -13,6 +23,23 @@ describe("applySettingsPatch", () => {
     expect(applySettingsPatch(base, { apiKey: "" })).toEqual({ ok: true, value: base });
     expect(applySettingsPatch(base, { apiKey: "  AIzaNEW_key-1  " })).toEqual({ ok: true, value: { ...base, apiKey: "AIzaNEW_key-1" } });
     expect(applySettingsPatch(base, { clearApiKey: true })).toEqual({ ok: true, value: { ...base, apiKey: "" } });
+  });
+
+  it("OAuth シークレットも同じ扱い", () => {
+    const withSecret = { ...base, oauthClientSecret: "GOCSPX-old_secret" };
+    expect(applySettingsPatch(withSecret, { oauthClientSecret: "" })).toEqual({ ok: true, value: withSecret });
+    expect(applySettingsPatch(withSecret, { oauthClientSecret: "GOCSPX-new" })).toMatchObject({ ok: true, value: { oauthClientSecret: "GOCSPX-new" } });
+    expect(applySettingsPatch(withSecret, { clearOauthClientSecret: true })).toMatchObject({ ok: true, value: { oauthClientSecret: "" } });
+  });
+
+  it("クライアント ID を変えるとログインを消す・同じなら残す", () => {
+    const loggedIn = { ...base, oauthClientId: CLIENT, refreshToken: "1//dummy-refresh" };
+    expect(applySettingsPatch(loggedIn, { oauthClientId: CLIENT })).toMatchObject({ ok: true, value: { refreshToken: "1//dummy-refresh" } });
+    expect(applySettingsPatch(loggedIn, { oauthClientId: "999-x.apps.googleusercontent.com" })).toMatchObject({ ok: true, value: { refreshToken: "" } });
+  });
+
+  it("refreshToken は設定画面から書けない", () => {
+    expect(applySettingsPatch(base, { refreshToken: "1//attacker-token" })).toEqual({ ok: true, value: base });
   });
 
   it("間隔は下限 60 秒・上限 3600 秒に収める", () => {
@@ -30,6 +57,10 @@ describe("applySettingsPatch", () => {
     [{ apiKey: "has space" }, "apiKey"],
     [{ apiKey: "x".repeat(201) }, "apiKey"],
     [{ apiKey: 1 }, "apiKey"],
+    [{ oauthClientSecret: "short" }, "oauthClientSecret"],
+    [{ oauthClientId: "not-a-client-id" }, "oauthClientId"],
+    [{ oauthClientId: 1 }, "oauthClientId"],
+    [{ authMode: "password" }, "authMode"],
     [{ serviceId: "../etc" }, "serviceId"],
     [{ serviceId: 3 }, "serviceId"],
     [{ intervalSec: "60" }, "intervalSec"],
@@ -57,15 +88,45 @@ describe("loadSettings", () => {
       enabled: false,
     });
   });
+  it("保存したログイン情報を読み戻す", () => {
+    const saved = { ...DEFAULT_SETTINGS, authMode: "oauth", oauthClientId: CLIENT, oauthClientSecret: "GOCSPX-secret", refreshToken: "1//dummy-refresh" };
+    expect(loadSettings(saved)).toEqual(saved);
+  });
+  it("クライアント ID がなければトークンは捨てる", () => {
+    expect(loadSettings({ refreshToken: "1//dummy-refresh" }).refreshToken).toBe("");
+  });
   it.each([undefined, null, "x"])("%j なら既定値", (raw) => {
     expect(loadSettings(raw)).toEqual(DEFAULT_SETTINGS);
   });
 });
 
+describe("missingConfig", () => {
+  const svc = { ...DEFAULT_SETTINGS, serviceId: "svc" };
+  it.each([
+    [{ ...DEFAULT_SETTINGS }, "枠"],
+    [svc, "API キー"],
+    [{ ...svc, apiKey: "k", channel: "@c" }, null],
+    [{ ...svc, authMode: "oauth" as const }, "クライアント"],
+    [{ ...svc, authMode: "oauth" as const, oauthClientId: CLIENT, oauthClientSecret: "GOCSPX-x" }, "ログイン"],
+    [{ ...svc, authMode: "oauth" as const, oauthClientId: CLIENT, oauthClientSecret: "GOCSPX-x", refreshToken: "1//t" }, null],
+  ])("%#", (s, expected) => {
+    const r = missingConfig(s);
+    if (expected === null) expect(r).toBeNull();
+    else expect(r).toContain(expected);
+  });
+});
+
 describe("publicSettings", () => {
-  it("API キーを含めない", () => {
-    const p = publicSettings({ ...DEFAULT_SETTINGS, apiKey: "AIzaSECRET" });
-    expect(JSON.stringify(p)).not.toContain("AIzaSECRET");
-    expect(p.hasApiKey).toBe(true);
+  it("秘密の値を含めない", () => {
+    const p = publicSettings({
+      ...DEFAULT_SETTINGS,
+      apiKey: "AIzaSECRET",
+      oauthClientId: CLIENT,
+      oauthClientSecret: "GOCSPX-SECRET",
+      refreshToken: "1//REFRESHSECRET",
+    });
+    const json = JSON.stringify(p);
+    for (const secret of ["AIzaSECRET", "GOCSPX-SECRET", "REFRESHSECRET"]) expect(json).not.toContain(secret);
+    expect(p).toMatchObject({ hasApiKey: true, hasClientSecret: true, loggedIn: true, oauthClientId: CLIENT });
   });
 });

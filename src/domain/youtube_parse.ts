@@ -65,10 +65,33 @@ export function pickLiveVideo(body: unknown): Result<string | null> {
   return ok(best?.id ?? null);
 }
 
-export type ApiErrorKind = "quota" | "bad-key" | "api-disabled" | "forbidden" | "server" | "other";
+// liveBroadcasts.list?part=id,snippet,status → 配信中の枠の ID（= 動画 ID）
+// 判定は「開始時刻あり・終了時刻なし」（videos.list と同じ考え方）
+export function pickLiveBroadcast(body: unknown): Result<string | null> {
+  if (!isRecord(body)) return err("bad-response");
+  const items = body["items"];
+  if (items === undefined) return ok(null);
+  if (!Array.isArray(items)) return err("bad-response");
+  let best: { id: string; start: number } | null = null;
+  for (const item of items as unknown[]) {
+    if (!isRecord(item)) continue;
+    const id = item["id"];
+    const snippet = item["snippet"];
+    if (typeof id !== "string" || !VIDEO_ID.test(id) || !isRecord(snippet)) continue;
+    const startRaw = snippet["actualStartTime"];
+    if (typeof startRaw !== "string" || snippet["actualEndTime"] !== undefined) continue;
+    const start = Date.parse(startRaw);
+    if (Number.isNaN(start)) continue;
+    if (best === null || start > best.start) best = { id, start };
+  }
+  return ok(best?.id ?? null);
+}
+
+export type ApiErrorKind = "quota" | "bad-key" | "api-disabled" | "forbidden" | "unauthorized" | "server" | "other";
 
 export function classifyApiError(status: number, body: unknown): ApiErrorKind {
   if (status >= 500) return "server";
+  if (status === 401) return "unauthorized";
   const error = isRecord(body) ? body["error"] : undefined;
   const errors = isRecord(error) ? error["errors"] : undefined;
   const firstError: unknown = Array.isArray(errors) ? errors[0] : undefined;

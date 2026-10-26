@@ -60,6 +60,10 @@ API キーは利用者が各自で発行する（配布物にキーを入れな�
 | `serviceId` | string | "" | 書き換える わんコメ の枠の ID（設定画面で一覧から選ぶ） |
 | `intervalSec` | number | 60 | 確認間隔。下限 60 |
 | `enabled` | boolean | true | 自動セットを使うか |
+| `authMode` | `"apiKey"` \| `"oauth"` | `"apiKey"` | 配信の探し方（§9） |
+| `oauthClientId` | string | "" | OAuth クライアント ID（`*.apps.googleusercontent.com`） |
+| `oauthClientSecret` | string | "" | OAuth クライアントシークレット。GET では返さない |
+| `refreshToken` | string | "" | ログインで得たトークン。設定画面からは書けない・GET では返さない |
 
 内部状態（保存）: 解決済みの `channelId` / `uploadsPlaylistId`、最後にセットした動画 ID、最後のエラー。
 
@@ -96,7 +100,51 @@ API キーは利用者が各自で発行する（配布物にキーを入れな�
 - [x] 配信開始から API に出るまでの遅れ（2026-10-26: `actualStartTime` は開始直後に出た。`liveBroadcastContent` が `live` になるまでは 1〜2 分）
 - [ ] `permissions: []` で読み込めるか
 
-## 9. 配布に向けて（後で）
+## 9. Google ログイン方式（OAuth）【決定 2026-10-27】
+
+API キー方式では公開の動画しか見えず、限定公開・非公開・メン限の配信を見つけられない（2026-10-27 に限定公開で確認）。そのため、利用者本人の許可で「自分の配信」を読む方式を追加する。API キー方式も残し、設定画面で選ぶ。
+
+| | API キー方式 | Google ログイン方式 |
+|---|---|---|
+| 見つけられる配信 | 公開のみ | 自分の配信すべて（限定公開・非公開・メン限を含む） |
+| 1 回の確認の quota | 2 | 1 |
+| 準備 | API キー | OAuth クライアント（デスクトップアプリ）の ID とシークレット + ログイン |
+
+### 9.1 配信中の枠の探し方
+
+- `liveBroadcasts.list?part=id,snippet,status&broadcastStatus=active&broadcastType=all&maxResults=50`
+  - `broadcastStatus` と `mine` は併用不可（どちらか 1 つ）。`active` は認証ユーザーの配信中の枠
+  - `broadcastType` の既定は `event`（予約した配信のみ）。「今すぐ配信」も拾うため `all`
+- 判定: `snippet.actualStartTime` があり `actualEndTime` がない枠。複数あれば開始が新しいもの。配信の ID はそのまま動画 ID
+- scope: `https://www.googleapis.com/auth/youtube.readonly`（読み取り専用）
+
+### 9.2 ログインの流れ（PKCE + ループバック）
+
+1. 設定画面で「Google でログイン」→ プラグインに `POST {action:"oauthStart"}`
+2. プラグインが `127.0.0.1` の空いているポートで一時サーバーを立て、`state` と PKCE（S256）を作って認可 URL を返す
+3. 設定画面が認可 URL を開く → 利用者が Google の画面で許可
+4. Google が `http://127.0.0.1:<port>/?code=...&state=...` に戻す → `state` を照合し、コードをトークンに交換（`access_type=offline`・`prompt=consent` でリフレッシュトークンを得る）
+5. 一時サーバーは 1 回受け取るか 5 分で閉じる。返すページは固定の文言のみ（受け取った値を画面に出さない）
+
+### 9.3 保存と安全
+
+- 保存: `oauthClientId` / `oauthClientSecret` / `refreshToken`。シークレットとリフレッシュトークンは設定画面の GET に返さない（「設定済み」「ログイン済み」だけ返す）・ログに出さない
+- アクセストークンはメモリのみ（期限の 60 秒前に更新）
+- リフレッシュトークンが無効（`invalid_grant`）になったら「再ログインが必要」と表示して止める
+- 「ログアウト」でリフレッシュトークンを消し、Google の revoke エンドポイントで無効化も試みる
+- 保存先は わんコメ のプラグイン設定ファイル（平文）。README に「PC を共有する場合は注意」と書く
+- OAuth クライアントは利用者が各自作る。配布側で共通のものを用意すると Google の審査が要り、未審査だと警告画面が出るため
+
+### 9.4 利用者への注意（README）
+
+- OAuth 同意画面の公開ステータスが「テスト中」だとリフレッシュトークンが 7 日で失効する → 「本番環境」にしてから（切り替え後に）ログインする。本番にしても審査は不要（自分だけが使う場合、「確認されていないアプリ」の警告を進めればよい）
+- 6 か月使わないとトークンは失効する
+
+### 9.5 未確認
+
+- [ ] わんコメが限定公開・メン限の配信のチャットを `watch?v=` で読めるか（メン限は わんコメ 側のログインが要る可能性）
+
+## 10. 配布に向けて（後で）
 
 - ライセンスを決める
 - README: API キーの発行手順、免責（わんコメ・YouTube とは無関係の非公式ツール）

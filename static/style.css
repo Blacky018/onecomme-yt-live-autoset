@@ -73,3 +73,9 @@ button.sub { background: transparent; color: var(--text); border: 1px solid var(
 button:disabled { opacity: 0.5; cursor: default; }
 .message { min-height: 1.6em; margin: 8px 0 0; }
 .message.error { color: var(--err); }
+fieldset.mode { border: 1px solid var(--line); border-radius: 8px; margin: 14px 0 0; padding: 8px 12px; }
+fieldset.mode legend { font-weight: 600; padding: 0 4px; }
+fieldset.mode label { margin-top: 4px; }
+.login-row { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.badge.logged-in { background: var(--ok); color: #fff; }
+a { color: var(--accent); }
