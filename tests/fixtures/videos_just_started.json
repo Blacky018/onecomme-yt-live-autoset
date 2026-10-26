@@ -1,0 +1,32 @@
+{
+  "kind": "youtube#videoListResponse",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "id": "liveNow0001",
+      "snippet": { "title": "テスト配信", "liveBroadcastContent": "upcoming" },
+      "status": { "privacyStatus": "public" },
+      "liveStreamingDetails": { "actualStartTime": "2026-10-26T12:52:41Z", "scheduledStartTime": "2026-10-26T12:45:00Z", "activeLiveChatId": "dummychat" }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "upcoming001",
+      "snippet": { "title": "予約枠", "liveBroadcastContent": "upcoming" },
+      "status": { "privacyStatus": "public" },
+      "liveStreamingDetails": { "scheduledStartTime": "2026-10-30T12:15:00Z" }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "ended000001",
+      "snippet": { "title": "過去の配信", "liveBroadcastContent": "none" },
+      "status": { "privacyStatus": "public" },
+      "liveStreamingDetails": { "actualStartTime": "2026-10-17T11:00:22Z", "actualEndTime": "2026-10-17T15:09:57Z", "scheduledStartTime": "2026-10-17T11:00:00Z" }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "ended000002",
+      "snippet": { "title": "普通の動画", "liveBroadcastContent": "none" },
+      "status": { "privacyStatus": "public" }
+    }
+  ]
+}

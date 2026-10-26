@@ -1,0 +1,11 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "dummy",
+  "items": [
+    { "kind": "youtube#playlistItem", "id": "p1", "contentDetails": { "videoId": "liveNow0001", "videoPublishedAt": "2026-10-26T12:30:00Z" } },
+    { "kind": "youtube#playlistItem", "id": "p2", "contentDetails": { "videoId": "upcoming001" } },
+    { "kind": "youtube#playlistItem", "id": "p3", "contentDetails": { "videoId": "ended000001", "videoPublishedAt": "2026-10-17T11:00:22Z" } },
+    { "kind": "youtube#playlistItem", "id": "p4", "contentDetails": { "videoId": "ended000002", "videoPublishedAt": "2026-07-01T14:51:10Z" } }
+  ],
+  "pageInfo": { "totalResults": 4, "resultsPerPage": 50 }
+}
