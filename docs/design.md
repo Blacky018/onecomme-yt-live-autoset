@@ -38,7 +38,7 @@ YouTube で配信を始めたら、わんコメの YouTube 枠の URL を「今�
 | 手順 | API | 利用枠（quota） | 頻度 |
 |---|---|---|---|
 | ハンドル → チャンネル ID・アップロード再生リスト ID | `channels.list?part=id,contentDetails&forHandle=@xxx` | 1 | 設定変更時に 1 回（結果を保存） |
-| 最近の動画 ID | `playlistItems.list?part=contentDetails&playlistId=UU...&maxResults=10` | 1 | 毎回 |
+| 最近の動画 ID | `playlistItems.list?part=contentDetails&playlistId=UU...&maxResults=50` | 1 | 毎回 |
 | 配信中かどうか | `videos.list?part=snippet,liveStreamingDetails&id=...` | 1 | 毎回 |
 
 - 判定: `liveStreamingDetails.actualStartTime` があり、`actualEndTime` がない動画を「配信中」とする。複数あれば `actualStartTime` が新しいもの
@@ -46,6 +46,7 @@ YouTube で配信を始めたら、わんコメの YouTube 枠の URL を「今�
 - 60 秒ごとで 1 日 2,880 units（無料枠 10,000 units/日 の範囲内）
 - `search.list`（1 回 100 units）は使わない
 - 2026-10-26 確認: 公開の予約枠はアップロード再生リストに入る。配信を始めても同じ動画 ID のまま
+- 再生リストは枠を作った順に並ぶため、前もって作った予約枠が埋もれないよう 50 件見る（quota は 1 unit のまま。`videos.list` も 50 件まで 1 回で取れる）
 - 限定公開の動画は API キーでは見えない → 対象は公開配信のみ（README に書く）
 
 API キーは利用者が各自で発行する（配布物にキーを入れない）。
@@ -92,7 +93,7 @@ API キーは利用者が各自で発行する（配布物にキーを入れな�
 - [x] `PUT /api/services/{id}` に `{ "url": ... }` だけ送ると URL だけ変わる（2026-10-26 確認。`POST` で作る時は `id` 必須）
 - [ ] 接続中の枠の URL を変えたとき、わんコメが自動でつなぎ直すか（しないなら `enabled` を false → true）
 - [x] 予約枠・配信中の枠がアップロード再生リストに入るか（入る。2026-10-26 確認）
-- [ ] 配信開始から `actualStartTime` が API に出るまでの遅れ
+- [x] 配信開始から API に出るまでの遅れ（2026-10-26: `actualStartTime` は開始直後に出た。`liveBroadcastContent` が `live` になるまでは 1〜2 分）
 - [ ] `permissions: []` で読み込めるか
 
 ## 9. 配布に向けて（後で）
