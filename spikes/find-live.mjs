@@ -48,6 +48,7 @@ try {
         v.snippet.liveBroadcastContent,
         v.status.privacyStatus,
         `start=${ls.actualStartTime ?? "-"}`,
+        `end=${ls.actualEndTime ?? "-"}`,
         `scheduled=${ls.scheduledStartTime ?? "-"}`,
         v.snippet.title,
       ].join(" | "),
