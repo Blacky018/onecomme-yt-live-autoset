@@ -179,14 +179,16 @@ export class LiveWatcher {
       throw new StepError("選んだ枠が YouTube の枠ではないため書き換えません");
     }
 
+    // わんコメの画面では接続中は URL を編集できないので、同じ順番（切断 → 書き換え → 接続）にする
+    const wasEnabled = service.value.enabled;
+    if (wasEnabled) {
+      const off = await this.onecomme.updateService(s.serviceId, { enabled: false });
+      if (!off.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[off.error]);
+    }
     const updated = await this.onecomme.updateService(s.serviceId, { url: watchUrl(videoId) });
     if (!updated.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[updated.error]);
     this.log(`set ${target.kind} video ${videoId} to service ${s.serviceId}`);
-
-    if (service.value.enabled) {
-      // 接続中なら、新しい URL でつなぎ直す
-      const off = await this.onecomme.updateService(s.serviceId, { enabled: false });
-      if (!off.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[off.error]);
+    if (wasEnabled) {
       await this.timers.sleep(RECONNECT_GAP_MS);
       const on = await this.onecomme.updateService(s.serviceId, { enabled: true });
       if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);

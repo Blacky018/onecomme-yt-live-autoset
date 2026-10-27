@@ -90,7 +90,7 @@ describe("LiveWatcher", () => {
     yt.live = ok(LIVE);
     const st = await watcher.checkNow();
     expect(st).toMatchObject({ state: "set", videoId: "liveNow0001", kind: "live", message: "配信中の枠をセットしました" });
-    expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=liveNow0001" }, { enabled: false }, { enabled: true }]);
+    expect(oc.updates).toEqual([{ enabled: false }, { url: "https://www.youtube.com/watch?v=liveNow0001" }, { enabled: true }]);
     expect(timers.slept).toHaveLength(1);
   });
 
@@ -194,7 +194,7 @@ describe("LiveWatcher", () => {
     yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
     const st = await watcher.checkNow();
     expect(st).toMatchObject({ state: "set", kind: "upcoming", message: expect.stringContaining("予約枠") });
-    expect(oc.updates[0]).toEqual({ url: "https://www.youtube.com/watch?v=upcoming001" });
+    expect(oc.updates[1]).toEqual({ url: "https://www.youtube.com/watch?v=upcoming001" });
   });
 
   it("予約枠から配信が始まっても同じ動画なら書き換えない", async () => {
