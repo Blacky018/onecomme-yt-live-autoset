@@ -16,6 +16,7 @@ const FIELD_LABEL: Record<string, string> = {
   serviceId: "枠の指定が正しくありません",
   intervalSec: "間隔は数字で入力してください",
   enabled: "オン・オフの値が正しくありません",
+  presetUpcoming: "オン・オフの値が正しくありません",
 };
 
 function el<T extends HTMLElement>(id: string): T {
@@ -50,6 +51,7 @@ const ui = {
   serviceId: el<HTMLSelectElement>("serviceId"),
   reloadServices: el<HTMLButtonElement>("reload-services"),
   intervalSec: el<HTMLInputElement>("intervalSec"),
+  presetUpcoming: el<HTMLInputElement>("presetUpcoming"),
   save: el<HTMLButtonElement>("save"),
   check: el<HTMLButtonElement>("check"),
   message: el<HTMLParagraphElement>("message"),
@@ -72,11 +74,12 @@ interface Snapshot {
     oauthClientId: string;
     serviceId: string;
     intervalSec: number;
+    presetUpcoming: boolean;
     hasApiKey: boolean;
     hasClientSecret: boolean;
     loggedIn: boolean;
   };
-  status: { state: string; message: string; videoId: string | null } | null;
+  status: { state: string; message: string; videoId: string | null; kind: "live" | "upcoming" | null } | null;
   login: { state: string; message: string } | null;
   authUrl: string | null;
 }
@@ -102,7 +105,8 @@ function toSnapshot(v: unknown): Snapshot | null {
       channel: str(s["channel"]),
       oauthClientId: str(s["oauthClientId"]),
       serviceId: str(s["serviceId"]),
-      intervalSec: typeof s["intervalSec"] === "number" ? s["intervalSec"] : 60,
+      intervalSec: typeof s["intervalSec"] === "number" ? s["intervalSec"] : 30,
+      presetUpcoming: s["presetUpcoming"] !== false,
       hasApiKey: s["hasApiKey"] === true,
       hasClientSecret: s["hasClientSecret"] === true,
       loggedIn: s["loggedIn"] === true,
@@ -112,6 +116,7 @@ function toSnapshot(v: unknown): Snapshot | null {
           state: str(st["state"]),
           message: str(st["message"]),
           videoId: typeof st["videoId"] === "string" && VIDEO_ID.test(st["videoId"]) ? st["videoId"] : null,
+          kind: st["kind"] === "live" || st["kind"] === "upcoming" ? st["kind"] : null,
         }
       : null,
     login: isRecord(lg) ? { state: str(lg["state"]), message: str(lg["message"]) } : null,
@@ -141,7 +146,9 @@ function render(snap: Snapshot, fillForm: boolean): void {
   const st = snap.status;
   const state = st?.state ?? "stopped";
   ui.badge.className = `badge ${state}`;
-  ui.badge.textContent = STATE_LABEL[state] ?? state;
+  const label = STATE_LABEL[state] ?? state;
+  // セット済みのときは「配信中」か「予約枠」かも出す
+  ui.badge.textContent = (state === "set" || state === "already-set") && st?.kind === "upcoming" ? `${label}（予約枠）` : label;
   ui.statusMessage.textContent = st?.message ?? "";
   if (st?.videoId) {
     ui.statusVideo.hidden = false;
@@ -171,6 +178,7 @@ function render(snap: Snapshot, fillForm: boolean): void {
     ui.oauthClientId.value = s.oauthClientId;
     ui.channel.value = s.channel;
     ui.intervalSec.value = String(s.intervalSec);
+    ui.presetUpcoming.checked = s.presetUpcoming;
     selectedServiceId = s.serviceId;
     ui.serviceId.value = selectedServiceId;
     showModeSections();
@@ -242,7 +250,8 @@ async function save(e: Event): Promise<void> {
       oauthClientSecret: ui.oauthClientSecret.value,
       clearOauthClientSecret: ui.clearOauthClientSecret.checked,
       serviceId: ui.serviceId.value,
-      intervalSec: Number.isFinite(interval) ? interval : 60,
+      intervalSec: Number.isFinite(interval) ? interval : 30,
+      presetUpcoming: ui.presetUpcoming.checked,
     });
     const snap = toSnapshot(data);
     if (!ok || !snap) {

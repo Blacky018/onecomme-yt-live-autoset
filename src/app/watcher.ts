@@ -1,11 +1,11 @@
 import type { Result } from "../domain/result";
-import { missingConfig, type Settings } from "../domain/settings";
+import { effectiveIntervalSec, missingConfig, type Settings } from "../domain/settings";
 import { extractVideoId, watchUrl } from "../domain/video_url";
 import type { OneCommeError, OneCommeService } from "../infra/onecomme_client";
-import type { SourceError } from "./live_source";
+import type { SourceError, Target } from "./live_source";
 
 export interface LiveFinder {
-  findLive(s: Settings): Promise<Result<string | null, SourceError>>;
+  findLive(s: Settings): Promise<Result<Target | null, SourceError>>;
 }
 
 export interface ServiceStore {
@@ -26,6 +26,8 @@ export interface WatchStatus {
   state: WatchState;
   message: string;
   videoId: string | null;
+  // セットした枠が配信中か予約枠か
+  kind: Target["kind"] | null;
   checkedAt: number | null;
 }
 
@@ -84,7 +86,7 @@ export class LiveWatcher {
   private running = false;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
-  private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, checkedAt: null };
+  private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, kind: null, checkedAt: null };
 
   constructor(
     private readonly settings: () => Settings,
@@ -131,7 +133,7 @@ export class LiveWatcher {
   private async runOnce(): Promise<void> {
     if (this.inFlight) return this.inFlight;
     this.inFlight = (async () => {
-      let nextSec = this.settings().intervalSec;
+      let nextSec = effectiveIntervalSec(this.settings());
       try {
         await this.step();
         this.failures = 0;
@@ -150,8 +152,8 @@ export class LiveWatcher {
     return this.inFlight;
   }
 
-  private setStatus(state: WatchState, message: string, videoId: string | null): void {
-    this.status = { state, message, videoId, checkedAt: this.timers.now() };
+  private setStatus(state: WatchState, message: string, target: Target | null): void {
+    this.status = { state, message, videoId: target?.videoId ?? null, kind: target?.kind ?? null, checkedAt: this.timers.now() };
   }
 
   private async step(): Promise<void> {
@@ -160,15 +162,17 @@ export class LiveWatcher {
     const missing = missingConfig(s);
     if (missing !== null) return this.setStatus("needs-config", missing, null);
 
-    const live = await this.source.findLive(s);
-    if (!live.ok) throw this.sourceError(live.error);
-    if (live.value === null) return this.setStatus("waiting", "配信中の枠はありません（配信開始を待っています）", null);
-    const videoId = live.value;
+    const found = await this.source.findLive(s);
+    if (!found.ok) throw this.sourceError(found.error);
+    if (found.value === null) return this.setStatus("waiting", "配信中・まもなく始まる予約枠はありません（配信開始を待っています）", null);
+    const target = found.value;
+    const videoId = target.videoId;
+    const label = target.kind === "live" ? "配信中の枠" : "予約枠（配信開始前）";
 
     const service = await this.onecomme.getService(s.serviceId);
     if (!service.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[service.error]);
     if (extractVideoId(service.value.url) === videoId) {
-      return this.setStatus("already-set", "配信中の枠がセットされています", videoId);
+      return this.setStatus("already-set", `${label}がセットされています`, target);
     }
     // 間違えて他サイトの枠を選んでいた場合に上書きしない
     if (!isYouTubeUrlOrEmpty(service.value.url)) {
@@ -177,7 +181,7 @@ export class LiveWatcher {
 
     const updated = await this.onecomme.updateService(s.serviceId, { url: watchUrl(videoId) });
     if (!updated.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[updated.error]);
-    this.log(`set video ${videoId} to service ${s.serviceId}`);
+    this.log(`set ${target.kind} video ${videoId} to service ${s.serviceId}`);
 
     if (service.value.enabled) {
       // 接続中なら、新しい URL でつなぎ直す
@@ -187,7 +191,7 @@ export class LiveWatcher {
       const on = await this.onecomme.updateService(s.serviceId, { enabled: true });
       if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
     }
-    this.setStatus("set", "配信中の枠をセットしました", videoId);
+    this.setStatus("set", `${label}をセットしました`, target);
   }
 
   private sourceError(kind: SourceError): StepError {

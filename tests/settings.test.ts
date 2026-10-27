@@ -3,6 +3,7 @@ import {
   DEFAULT_SETTINGS,
   MIN_INTERVAL_SEC,
   applySettingsPatch,
+  effectiveIntervalSec,
   loadSettings,
   missingConfig,
   publicSettings,
@@ -43,7 +44,8 @@ describe("applySettingsPatch", () => {
   });
 
   it("間隔は下限 60 秒・上限 3600 秒に収める", () => {
-    expect(applySettingsPatch(base, { intervalSec: 5 })).toMatchObject({ ok: true, value: { intervalSec: MIN_INTERVAL_SEC } });
+    expect(MIN_INTERVAL_SEC).toBe(30);
+    expect(applySettingsPatch(base, { intervalSec: 5 })).toMatchObject({ ok: true, value: { intervalSec: 30 } });
     expect(applySettingsPatch(base, { intervalSec: 99999 })).toMatchObject({ ok: true, value: { intervalSec: 3600 } });
     expect(applySettingsPatch(base, { intervalSec: 90.7 })).toMatchObject({ ok: true, value: { intervalSec: 90 } });
   });
@@ -66,6 +68,7 @@ describe("applySettingsPatch", () => {
     [{ intervalSec: "60" }, "intervalSec"],
     [{ intervalSec: Number.NaN }, "intervalSec"],
     [{ enabled: "yes" }, "enabled"],
+    [{ presetUpcoming: 1 }, "presetUpcoming"],
     [{ channel: 5 }, "channel"],
   ])("不正な値 %j → %s", (patch, field) => {
     expect(applySettingsPatch(base, patch)).toEqual({ ok: false, error: field });
@@ -73,6 +76,11 @@ describe("applySettingsPatch", () => {
 
   it.each([null, "x", [], 1])("オブジェクトでない %j はエラー", (patch) => {
     expect(applySettingsPatch(base, patch)).toEqual({ ok: false, error: "body" });
+  });
+
+  it("予約枠の先取りはオン・オフできる（既定オン）", () => {
+    expect(DEFAULT_SETTINGS.presetUpcoming).toBe(true);
+    expect(applySettingsPatch(base, { presetUpcoming: false })).toMatchObject({ ok: true, value: { presetUpcoming: false } });
   });
 
   it("知らない項目は無視", () => {
@@ -113,6 +121,14 @@ describe("missingConfig", () => {
     const r = missingConfig(s);
     if (expected === null) expect(r).toBeNull();
     else expect(r).toContain(expected);
+  });
+});
+
+describe("effectiveIntervalSec", () => {
+  it("API キー方式は 60 秒未満にしない・Google ログイン方式は設定どおり", () => {
+    expect(effectiveIntervalSec({ ...DEFAULT_SETTINGS, authMode: "apiKey", intervalSec: 30 })).toBe(60);
+    expect(effectiveIntervalSec({ ...DEFAULT_SETTINGS, authMode: "apiKey", intervalSec: 90 })).toBe(90);
+    expect(effectiveIntervalSec({ ...DEFAULT_SETTINGS, authMode: "oauth", intervalSec: 30 })).toBe(30);
   });
 });
 

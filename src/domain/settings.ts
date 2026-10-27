@@ -15,9 +15,13 @@ export interface Settings {
   refreshToken: string;
   serviceId: string;
   intervalSec: number;
+  // 配信前に予約枠を先にセットする
+  presetUpcoming: boolean;
 }
 
-export const MIN_INTERVAL_SEC = 60;
+export const MIN_INTERVAL_SEC = 30;
+// API キー方式は 1 回 2 units 使うので下限を長めにする
+export const API_KEY_MIN_INTERVAL_SEC = 60;
 export const MAX_INTERVAL_SEC = 3600;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -30,7 +34,13 @@ export const DEFAULT_SETTINGS: Settings = {
   refreshToken: "",
   serviceId: "",
   intervalSec: MIN_INTERVAL_SEC,
+  presetUpcoming: true,
 };
+
+// 実際に使う確認間隔（方式ごとの下限で切り上げ）
+export function effectiveIntervalSec(s: Settings): number {
+  return s.authMode === "apiKey" ? Math.max(s.intervalSec, API_KEY_MIN_INTERVAL_SEC) : s.intervalSec;
+}
 
 const API_KEY = /^[A-Za-z0-9_-]{1,200}$/;
 const SERVICE_ID = /^[A-Za-z0-9-]{1,64}$/;
@@ -101,10 +111,11 @@ export function applySettingsPatch(current: Settings, patch: unknown): Result<Se
     if (typeof v !== "number" || !Number.isFinite(v)) return err("intervalSec");
     next.intervalSec = Math.min(MAX_INTERVAL_SEC, Math.max(MIN_INTERVAL_SEC, Math.floor(v)));
   }
-  if ("enabled" in patch) {
-    const v = patch["enabled"];
-    if (typeof v !== "boolean") return err("enabled");
-    next.enabled = v;
+  for (const key of ["enabled", "presetUpcoming"] as const) {
+    if (!(key in patch)) continue;
+    const v = patch[key];
+    if (typeof v !== "boolean") return err(key);
+    next[key] = v;
   }
   return ok(next);
 }

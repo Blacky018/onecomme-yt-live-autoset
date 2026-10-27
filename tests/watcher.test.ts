@@ -3,12 +3,13 @@ import { LiveWatcher, MAX_BACKOFF_SEC, QUOTA_WAIT_SEC, type LiveFinder, type Ser
 import { err, ok, type Result } from "../src/domain/result";
 import { DEFAULT_SETTINGS, type Settings } from "../src/domain/settings";
 import type { OneCommeError, OneCommeService } from "../src/infra/onecomme_client";
-import type { SourceError } from "../src/app/live_source";
+import type { SourceError, Target } from "../src/app/live_source";
 
+const LIVE = { videoId: "liveNow0001", kind: "live" } as const;
 const CONFIGURED: Settings = { ...DEFAULT_SETTINGS, apiKey: "AIzaKEY", channel: "@me", serviceId: "svc-1", intervalSec: 60 };
 
 class FakeYouTube implements LiveFinder {
-  live: Result<string | null, SourceError> = ok(null);
+  live: Result<Target | null, SourceError> = ok(null);
   findCalls = 0;
   async findLive() {
     this.findCalls += 1;
@@ -86,9 +87,9 @@ describe("LiveWatcher", () => {
 
   it("配信中の枠を見つけたら URL を書き換え、接続中ならつなぎ直す", async () => {
     const { yt, oc, timers, watcher } = setup();
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     const st = await watcher.checkNow();
-    expect(st).toMatchObject({ state: "set", videoId: "liveNow0001" });
+    expect(st).toMatchObject({ state: "set", videoId: "liveNow0001", kind: "live", message: "配信中の枠をセットしました" });
     expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=liveNow0001" }, { enabled: false }, { enabled: true }]);
     expect(timers.slept).toHaveLength(1);
   });
@@ -96,7 +97,7 @@ describe("LiveWatcher", () => {
   it("接続していない枠はつなぎ直さない", async () => {
     const { yt, oc, watcher } = setup();
     oc.service.enabled = false;
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     await watcher.checkNow();
     expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=liveNow0001" }]);
   });
@@ -104,7 +105,7 @@ describe("LiveWatcher", () => {
   it("もうセット済みなら書き換えない", async () => {
     const { yt, oc, watcher } = setup();
     oc.service.url = "https://youtube.com/live/liveNow0001?feature=share";
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     expect((await watcher.checkNow()).state).toBe("already-set");
     expect(oc.updates).toEqual([]);
   });
@@ -112,7 +113,7 @@ describe("LiveWatcher", () => {
   it("YouTube 以外の枠は上書きしない", async () => {
     const { yt, oc, watcher } = setup();
     oc.service.url = "https://www.twitch.tv/someone";
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     const st = await watcher.checkNow();
     expect(st.state).toBe("error");
     expect(oc.updates).toEqual([]);
@@ -121,7 +122,7 @@ describe("LiveWatcher", () => {
   it("枠が消えていたらエラー", async () => {
     const { yt, oc, watcher } = setup();
     oc.missing = true;
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     expect((await watcher.checkNow()).message).toContain("枠が見つかりません");
   });
 
@@ -174,7 +175,7 @@ describe("LiveWatcher", () => {
     const { yt, logs, watcher } = setup();
     yt.live = err<SourceError>("bad-key");
     const st = await watcher.checkNow();
-    yt.live = ok("liveNow0001");
+    yt.live = ok(LIVE);
     await watcher.checkNow();
     expect(JSON.stringify([logs, st])).not.toContain("AIzaKEY");
   });
@@ -186,6 +187,37 @@ describe("LiveWatcher", () => {
     timers.scheduled = [];
     await watcher.checkNow();
     expect(timers.scheduled).toEqual([]);
+  });
+
+  it("予約枠をセットしたことを表示する", async () => {
+    const { yt, oc, watcher } = setup();
+    yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+    const st = await watcher.checkNow();
+    expect(st).toMatchObject({ state: "set", kind: "upcoming", message: expect.stringContaining("予約枠") });
+    expect(oc.updates[0]).toEqual({ url: "https://www.youtube.com/watch?v=upcoming001" });
+  });
+
+  it("予約枠から配信が始まっても同じ動画なら書き換えない", async () => {
+    const { yt, oc, watcher } = setup();
+    yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+    await watcher.checkNow();
+    oc.updates = [];
+    yt.live = ok({ videoId: "upcoming001", kind: "live" });
+    expect(await watcher.checkNow()).toMatchObject({ state: "already-set", kind: "live" });
+    expect(oc.updates).toEqual([]);
+  });
+
+  it("Google ログイン方式は 30 秒、API キー方式は 60 秒未満にしない", async () => {
+    const oauth = setup({ ...CONFIGURED, intervalSec: 30, authMode: "oauth", oauthClientId: "1-a.apps.googleusercontent.com", oauthClientSecret: "GOCSPX-x", refreshToken: "1//t" });
+    oauth.watcher.start();
+    oauth.timers.scheduled = [];
+    await oauth.watcher.checkNow();
+    expect(oauth.timers.scheduled).toEqual([30_000]);
+    const apiKey = setup({ ...CONFIGURED, intervalSec: 30 });
+    apiKey.watcher.start();
+    apiKey.timers.scheduled = [];
+    await apiKey.watcher.checkNow();
+    expect(apiKey.timers.scheduled).toEqual([60_000]);
   });
 
   it("想定外の例外でも落ちずにエラー状態になる", async () => {

@@ -79,3 +79,4 @@ fieldset.mode label { margin-top: 4px; }
 .login-row { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
 .badge.logged-in { background: var(--ok); color: #fff; }
 a { color: var(--accent); }
+label.switch-row { margin-top: 14px; font-weight: 600; }

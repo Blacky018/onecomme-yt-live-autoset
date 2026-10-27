@@ -2,14 +2,21 @@ import { parseChannelInput, type ChannelRef } from "../domain/channel";
 import type { TokenResponse } from "../domain/oauth";
 import { err, ok, type Result } from "../domain/result";
 import type { Settings } from "../domain/settings";
-import type { ChannelInfo } from "../domain/youtube_parse";
+import { chooseUpcoming, type ChannelInfo, type Upcoming } from "../domain/youtube_parse";
 import type { OAuthClient, TokenError } from "../infra/google_oauth";
-import type { YouTubeError } from "../infra/youtube_client";
+import type { PublicLookup, YouTubeError } from "../infra/youtube_client";
 
 export interface YouTubeApi {
   resolveChannel(apiKey: string, ref: ChannelRef): Promise<Result<ChannelInfo, YouTubeError>>;
-  findPublicLive(apiKey: string, uploadsPlaylistId: string): Promise<Result<string | null, YouTubeError>>;
+  findPublicLive(apiKey: string, uploadsPlaylistId: string): Promise<Result<PublicLookup, YouTubeError>>;
   findMyLive(accessToken: string): Promise<Result<string | null, YouTubeError>>;
+  findMyUpcoming(accessToken: string): Promise<Result<Upcoming[], YouTubeError>>;
+}
+
+// セットする枠。live = 配信中、upcoming = 開始前の予約枠
+export interface Target {
+  videoId: string;
+  kind: "live" | "upcoming";
 }
 
 export interface TokenApi {
@@ -21,7 +28,7 @@ export type SourceError = YouTubeError | "bad-channel" | "auth-required" | "bad-
 // アクセストークンは期限の少し前に取り直す
 export const TOKEN_MARGIN_MS = 60_000;
 
-// 設定の方式に合わせて「配信中の動画 ID」を探す
+// 設定の方式に合わせて「セットする枠」を探す。配信中の枠が最優先、なければ（設定がオンなら）予約枠
 export class LiveSource {
   private channelCache: { key: string; info: ChannelInfo } | null = null;
   private tokenCache: { refreshToken: string; accessToken: string; expiresAt: number } | null = null;
@@ -38,11 +45,18 @@ export class LiveSource {
     this.tokenCache = null;
   }
 
-  findLive(s: Settings): Promise<Result<string | null, SourceError>> {
+  findLive(s: Settings): Promise<Result<Target | null, SourceError>> {
     return s.authMode === "oauth" ? this.findWithOAuth(s) : this.findWithApiKey(s);
   }
 
-  private async findWithApiKey(s: Settings): Promise<Result<string | null, SourceError>> {
+  private pickTarget(live: string | null, upcoming: readonly Upcoming[], s: Settings): Target | null {
+    if (live !== null) return { videoId: live, kind: "live" };
+    if (!s.presetUpcoming) return null;
+    const id = chooseUpcoming(upcoming, this.now());
+    return id === null ? null : { videoId: id, kind: "upcoming" };
+  }
+
+  private async findWithApiKey(s: Settings): Promise<Result<Target | null, SourceError>> {
     const key = `${s.apiKey}\n${s.channel}`;
     let info = this.channelCache?.key === key ? this.channelCache.info : null;
     if (info === null) {
@@ -53,19 +67,31 @@ export class LiveSource {
       info = r.value;
       this.channelCache = { key, info };
     }
-    return this.youtube.findPublicLive(s.apiKey, info.uploadsPlaylistId);
+    const r = await this.youtube.findPublicLive(s.apiKey, info.uploadsPlaylistId);
+    if (!r.ok) return r;
+    return ok(this.pickTarget(r.value.live, r.value.upcoming, s));
   }
 
-  private async findWithOAuth(s: Settings): Promise<Result<string | null, SourceError>> {
+  private async findWithOAuth(s: Settings): Promise<Result<Target | null, SourceError>> {
+    const live = await this.withToken(s, (t) => this.youtube.findMyLive(t));
+    if (!live.ok) return live;
+    if (live.value !== null || !s.presetUpcoming) return ok(this.pickTarget(live.value, [], s));
+    // 配信中がないときだけ予約枠を見る（+1 unit）
+    const upcoming = await this.withToken(s, (t) => this.youtube.findMyUpcoming(t));
+    if (!upcoming.ok) return upcoming;
+    return ok(this.pickTarget(null, upcoming.value, s));
+  }
+
+  // アクセストークンを付けて呼ぶ。401 なら（先に失効していた）1 回だけ取り直して再試行
+  private async withToken<T>(s: Settings, call: (token: string) => Promise<Result<T, YouTubeError>>): Promise<Result<T, SourceError>> {
     const token = await this.accessToken(s);
     if (!token.ok) return token;
-    const r = await this.youtube.findMyLive(token.value);
+    const r = await call(token.value);
     if (r.ok || r.error !== "unauthorized") return r;
-    // アクセストークンが先に失効していた → 1 回だけ取り直す
     this.tokenCache = null;
     const again = await this.accessToken(s);
     if (!again.ok) return again;
-    return this.youtube.findMyLive(again.value);
+    return call(again.value);
   }
 
   private async accessToken(s: Settings): Promise<Result<string, SourceError>> {

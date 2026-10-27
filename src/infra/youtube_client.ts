@@ -4,14 +4,22 @@ import {
   classifyApiError,
   parseChannelsResponse,
   parsePlaylistItems,
+  parseUpcomingBroadcasts,
+  parseUpcomingVideos,
   pickLiveBroadcast,
   pickLiveVideo,
   type ApiErrorKind,
   type ChannelInfo,
+  type Upcoming,
 } from "../domain/youtube_parse";
 import { requestJson, type FetchLike } from "./http";
 
 export type YouTubeError = ApiErrorKind | "network" | "bad-response" | "channel-not-found";
+
+export interface PublicLookup {
+  live: string | null;
+  upcoming: Upcoming[];
+}
 
 type Auth = { apiKey: string } | { accessToken: string };
 
@@ -35,18 +43,20 @@ export class YouTubeClient {
     return err(parsed.error === "channel-not-found" ? "channel-not-found" : "bad-response");
   }
 
-  // API キー方式: 公開の配信中の動画（2 units）
-  async findPublicLive(apiKey: string, uploadsPlaylistId: string): Promise<Result<string | null, YouTubeError>> {
+  // API キー方式: 公開の配信中の動画と予約枠（2 units）
+  async findPublicLive(apiKey: string, uploadsPlaylistId: string): Promise<Result<PublicLookup, YouTubeError>> {
     const auth = { apiKey };
     const list = await this.get("playlistItems", { part: "contentDetails", playlistId: uploadsPlaylistId, maxResults: RECENT_COUNT }, auth);
     if (!list.ok) return list;
     const ids = parsePlaylistItems(list.value);
     if (!ids.ok) return err("bad-response");
-    if (ids.value.length === 0) return ok(null);
+    if (ids.value.length === 0) return ok({ live: null, upcoming: [] });
     const videos = await this.get("videos", { part: "liveStreamingDetails", id: ids.value.join(",") }, auth);
     if (!videos.ok) return videos;
     const live = pickLiveVideo(videos.value);
-    return live.ok ? live : err("bad-response");
+    const upcoming = parseUpcomingVideos(videos.value);
+    if (!live.ok || !upcoming.ok) return err("bad-response");
+    return ok({ live: live.value, upcoming: upcoming.value });
   }
 
   // Google ログイン方式: 自分の配信中の枠（限定公開・非公開・メン限を含む。1 unit）
@@ -60,6 +70,18 @@ export class YouTubeClient {
     if (!r.ok) return r;
     const live = pickLiveBroadcast(r.value);
     return live.ok ? live : err("bad-response");
+  }
+
+  // Google ログイン方式: 自分の予約枠（1 unit）
+  async findMyUpcoming(accessToken: string): Promise<Result<Upcoming[], YouTubeError>> {
+    const r = await this.get(
+      "liveBroadcasts",
+      { part: "id,snippet", broadcastStatus: "upcoming", broadcastType: "all", maxResults: "50" },
+      { accessToken },
+    );
+    if (!r.ok) return r;
+    const list = parseUpcomingBroadcasts(r.value);
+    return list.ok ? list : err("bad-response");
   }
 
   private async get(endpoint: string, params: Record<string, string>, auth: Auth): Promise<Result<unknown, YouTubeError>> {

@@ -1,6 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { classifyApiError, parseChannelsResponse, parsePlaylistItems, pickLiveBroadcast, pickLiveVideo } from "../src/domain/youtube_parse";
+import {
+  chooseUpcoming,
+  classifyApiError,
+  parseChannelsResponse,
+  parsePlaylistItems,
+  parseUpcomingBroadcasts,
+  parseUpcomingVideos,
+  pickLiveBroadcast,
+  pickLiveVideo,
+} from "../src/domain/youtube_parse";
 
 // フィクスチャは 2026-10-26 の実レスポンスの形をもとに、ID・タイトルをダミーにしたもの
 const fixture = (name: string): unknown =>
@@ -75,6 +84,53 @@ describe("pickLiveBroadcast", () => {
   });
   it.each([null, [], { items: "x" }])("壊れた入力 %j", (input) => {
     expect(pickLiveBroadcast(input).ok).toBe(false);
+  });
+});
+
+describe("parseUpcomingVideos", () => {
+  it("開始予定があり未開始の動画だけ", () => {
+    expect(parseUpcomingVideos(fixture("videos_just_started.json"))).toEqual({
+      ok: true,
+      value: [{ id: "upcoming001", scheduledMs: Date.parse("2026-10-30T12:15:00Z") }],
+    });
+  });
+  it.each([null, { items: 1 }])("壊れた入力 %j", (input) => {
+    expect(parseUpcomingVideos(input).ok).toBe(false);
+  });
+});
+
+describe("parseUpcomingBroadcasts", () => {
+  it("開始予定があり未開始の枠だけ", () => {
+    expect(parseUpcomingBroadcasts(fixture("broadcasts_active.json"))).toEqual({
+      ok: true,
+      value: [{ id: "testing0001", scheduledMs: Date.parse("2026-10-27T02:00:00Z") }],
+    });
+  });
+  it("開始予定のない枠（今すぐ配信の既定の枠など）は除く", () => {
+    expect(parseUpcomingBroadcasts({ items: [{ id: "default0001", snippet: { isDefaultBroadcast: true } }] })).toEqual({ ok: true, value: [] });
+  });
+});
+
+describe("chooseUpcoming", () => {
+  const H = 3600_000;
+  const now = Date.parse("2026-10-27T12:00:00Z");
+  const u = (id: string, offsetH: number) => ({ id, scheduledMs: now + offsetH * H });
+
+  it("開始予定が今に一番近いもの", () => {
+    expect(chooseUpcoming([u("later000001", 5), u("soon0000001", 1), u("past0000001", -3)], now)).toBe("soon0000001");
+  });
+  it("少し遅れて始める予約枠（開始予定を過ぎた）も選ぶ", () => {
+    expect(chooseUpcoming([u("late0000001", -0.5), u("later000001", 5)], now)).toBe("late0000001");
+  });
+  it("差が同じなら早いほう", () => {
+    expect(chooseUpcoming([u("after000001", 2), u("before00001", -2)], now)).toBe("before00001");
+  });
+  it("範囲外（12 時間より前・24 時間より後）は選ばない", () => {
+    expect(chooseUpcoming([u("old00000001", -12.1), u("far00000001", 24.1)], now)).toBeNull();
+    expect(chooseUpcoming([u("edge0000001", 24)], now)).toBe("edge0000001");
+  });
+  it("空なら null", () => {
+    expect(chooseUpcoming([], now)).toBeNull();
   });
 });
 
