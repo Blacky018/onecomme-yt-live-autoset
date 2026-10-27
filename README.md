@@ -42,13 +42,21 @@ YouTube API は 1 日 10,000 まで無料で使えます。どちらの方式も
 
 ## インストール
 
-1. 配布 zip を展開します
-2. 中の `yt-live-autoset` フォルダを、わんコメのプラグインフォルダに入れます
-   - エクスプローラーのアドレス欄に `%APPDATA%\onecomme\plugins` と入力すると開けます
+1. 配布 zip を右クリック →「すべて展開」します（zip を開いただけの状態では動きません）
+2. 展開したフォルダの **`install.bat`** をダブルクリックします
+   - わんコメのプラグインフォルダに自動でコピーされます
+   - セキュリティの警告が出たら「実行」を押してください。「Windows によって PC が保護されました」と出た場合は「詳細情報」→「実行」です（ネットから入手した bat に出る、いつもの警告です）
 3. わんコメを起動（起動中なら再起動）し、「プラグイン」画面で「YouTube 配信 URL 自動セット（非公式）」を有効にします
 4. 設定画面を開きます: <http://localhost:11180/plugins/com.riito.yt-live-autoset/index.html>
 
-**更新するとき**は、新しい `yt-live-autoset` フォルダで上書きしてください。設定（`state.json`）はそのまま残ります。
+**更新するとき**も、新しい zip の `install.bat` を実行するだけです。設定（`state.json`）はそのまま残ります。
+
+<details>
+<summary>bat を使わずに手で入れる場合</summary>
+
+エクスプローラーのアドレス欄に `%APPDATA%\onecomme\plugins` と入力して Enter を押すと、わんコメのプラグインフォルダが開きます。そこへ `yt-live-autoset` フォルダをコピーしてください。`install.bat` はメモ帳で開くと中身を確認できます（このコピーしかしていません）。
+
+</details>
 
 ## 準備 1: Google Cloud のプロジェクトと YouTube Data API
 

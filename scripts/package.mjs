@@ -1,5 +1,5 @@
 // 配布用 zip を作る: dist/yt-live-autoset-<version>.zip と SHA-256
-// 中身: yt-live-autoset/（プラグインフォルダ）, README.md, LICENSE
+// 中身: yt-live-autoset/（プラグインフォルダ）, install.bat, README.md, LICENSE
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -29,6 +29,8 @@ mkdirSync(stage, { recursive: true });
 cpSync(join(root, "dist", "yt-live-autoset"), join(stage, "yt-live-autoset"), { recursive: true });
 cpSync(join(root, "README.md"), join(stage, "README.md"));
 cpSync(join(root, "LICENSE"), join(stage, "LICENSE"));
+// プラグインフォルダを探さなくて済むように、ダブルクリックで入れられる bat を同梱する
+cpSync(join(root, "release", "install.bat"), join(stage, "install.bat"));
 
 const zip = join(root, "dist", `${name}.zip`);
 rmSync(zip, { force: true });
