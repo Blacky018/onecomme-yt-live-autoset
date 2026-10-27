@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー｜YouTube 配信 URL 自動セット</title>
+<meta name="description" content="わんコメ用の非公式プラグイン「YouTube 配信 URL 自動セット」のプライバシーポリシーです。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><nav><a href="./">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="__REPO_URL__">ソースコード</a></nav></header>
+<main>
+<h1>プライバシーポリシー</h1>
+<p class="lead">YouTube 配信 URL 自動セット（わんコメ用プラグイン・非公式）<br>制定日: 2026 年 10 月 28 日</p>
+
+<p>このページでは、わんコメ用プラグイン「YouTube 配信 URL 自動セット」（以下「本プラグイン」）が扱う情報について説明します。本プラグインは利用者の PC の中だけで動きます。作者が運営するサーバーはなく、作者が利用者の情報を受け取ることはありません。</p>
+
+<h2>1. 本プラグインがアクセスする Google ユーザーデータ</h2>
+<p>Google ログイン方式を使う場合、本プラグインは次の権限（スコープ）だけを求めます。</p>
+<ul>
+<li><code>https://www.googleapis.com/auth/youtube.readonly</code>（YouTube アカウントの表示・読み取り専用）</li>
+</ul>
+<p>この権限を使って、YouTube Data API から<strong>ログインしたチャンネル自身のライブ配信の一覧</strong>（配信中・配信予定の枠の動画 ID、開始時刻など）を読み取ります。動画やコメントの投稿・変更・削除など、書き込みは一切行いません。</p>
+
+<h2>2. 利用目的</h2>
+<p>読み取った情報は、<strong>配信中（または開始予定が近い）枠の動画 ID を見つけ、利用者の PC で動いているわんコメの YouTube 枠の URL を書き換える</strong>ためだけに使います。それ以外の目的（広告、分析、学習データなど）には使いません。</p>
+
+<h2>3. 保存する情報</h2>
+<p>次の情報を、利用者の PC の中（<code>%APPDATA%\onecomme\plugins\yt-live-autoset\state.json</code>）にだけ保存します。</p>
+<ul>
+<li>設定画面で入力した値（OAuth クライアント ID・シークレット、API キー、チャンネル、確認間隔など）</li>
+<li>Google ログインで得たリフレッシュトークン</li>
+</ul>
+<p>これらは暗号化されずに保存されます。ファイルを他人に渡したり、共有フォルダに置いたりしないでください。YouTube から読み取った配信の情報は、処理のために一時的にメモリ上で使うだけで、ファイルには保存しません。</p>
+
+<h2>4. 第三者への提供・送信</h2>
+<p>本プラグインは、Google ユーザーデータを含む利用者の情報を、作者や第三者に送信・提供・販売しません。通信先は次のとおりです。</p>
+<div class="table-wrap"><table>
+<tr><th>通信先</th><th>目的</th></tr>
+<tr><td><code>www.googleapis.com</code></td><td>YouTube Data API（配信中の枠を探す）</td></tr>
+<tr><td><code>oauth2.googleapis.com</code> / <code>accounts.google.com</code></td><td>Google ログイン、トークンの更新・取り消し</td></tr>
+<tr><td><code>127.0.0.1</code>（利用者の PC 自身）</td><td>わんコメ本体の API（枠の URL の書き換え）、ログイン時の戻り先</td></tr>
+</table></div>
+
+<h2>5. Google API サービスのユーザーデータに関するポリシー</h2>
+<p>本プラグインによる Google API から受け取った情報の使用および他のアプリへの転送は、限定使用の要件を含む <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API サービスのユーザーデータに関するポリシー</a>に準拠します。</p>
+
+<h2>6. YouTube API サービスについて</h2>
+<p>本プラグインは YouTube API サービスを使用します。本プラグインを使用することで、<a href="https://www.youtube.com/t/terms">YouTube 利用規約</a>に同意したものとみなされます。Google による情報の扱いについては <a href="https://policies.google.com/privacy">Google プライバシー ポリシー</a>をご覧ください。</p>
+
+<h2>7. アクセス権の取り消しとデータの削除</h2>
+<ul>
+<li>設定画面の「ログアウト」を押すと、保存したトークンを削除し、Google 側の許可も取り消します</li>
+<li><a href="https://myaccount.google.com/connections">Google アカウントの「サードパーティ製のアプリとサービス」</a>からも、いつでも許可を取り消せます</li>
+<li>わんコメでプラグインを無効にし、<code>%APPDATA%\onecomme\plugins\yt-live-autoset</code> フォルダを削除すると、本プラグインが保存したすべての情報が消えます</li>
+</ul>
+
+<h2>8. このポリシーの変更</h2>
+<p>このポリシーを変更する場合は、このページで内容と日付を更新してお知らせします。</p>
+
+<h2>9. お問い合わせ</h2>
+<p>本ポリシーについてのお問い合わせは、<a href="__REPO_URL__/issues">GitHub の Issues</a> へお願いします。</p>
+
+<footer>© 2026 りーと ・ <a href="./">ホームへ戻る</a></footer>
+</main>
+</body>
+</html>

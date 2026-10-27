@@ -34,11 +34,14 @@ const zip = join(root, "dist", `${name}.zip`);
 rmSync(zip, { force: true });
 // Windows 標準の tar（bsdtar）は zip を作れる。Git Bash の GNU tar は作れないので絶対パスで呼ぶ
 const tar = process.platform === "win32" ? join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe") : "zip";
+// zip の一番上に中身を直接置く。Windows の「すべて展開」は zip 名のフォルダを自動で作るため、
+// 外側にもう 1 段フォルダがあると 3 重になり、外側ごとプラグインフォルダに入れる間違いが起きる
+const entries = ["yt-live-autoset", "README.md", "LICENSE"];
 if (process.platform === "win32") {
   if (!existsSync(tar)) throw new Error(`tar.exe が見つかりません: ${tar}`);
-  execFileSync(tar, ["-a", "-c", "-f", zip, "-C", join(root, "dist", "package"), name], { stdio: "inherit" });
+  execFileSync(tar, ["-a", "-c", "-f", zip, "-C", stage, ...entries], { stdio: "inherit" });
 } else {
-  execFileSync("zip", ["-r", "-q", zip, name], { cwd: join(root, "dist", "package"), stdio: "inherit" });
+  execFileSync("zip", ["-r", "-q", zip, ...entries], { cwd: stage, stdio: "inherit" });
 }
 
 const hash = createHash("sha256").update(readFileSync(zip)).digest("hex");
