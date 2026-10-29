@@ -94,8 +94,8 @@ describe("LiveWatcher", () => {
     expect(timers.slept).toHaveLength(1);
   });
 
-  it("接続していない枠はつなぎ直さない", async () => {
-    const { yt, oc, watcher } = setup();
+  it("自動接続がオフなら、接続していない枠は URL だけ書き換える", async () => {
+    const { yt, oc, watcher } = setup({ ...CONFIGURED, autoConnectLive: false });
     oc.service.enabled = false;
     yt.live = ok(LIVE);
     await watcher.checkNow();
@@ -205,6 +205,101 @@ describe("LiveWatcher", () => {
     yt.live = ok({ videoId: "upcoming001", kind: "live" });
     expect(await watcher.checkNow()).toMatchObject({ state: "already-set", kind: "live" });
     expect(oc.updates).toEqual([]);
+  });
+
+  describe("配信中の自動接続", () => {
+    it("接続オフでも、配信中の枠なら URL を書き換えて接続する", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok(LIVE);
+      const st = await watcher.checkNow();
+      expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=liveNow0001" }, { enabled: true }]);
+      expect(st).toMatchObject({ state: "set", kind: "live", message: expect.stringContaining("接続しました") });
+    });
+
+    it("予約枠では接続オフのまま（URL だけ先にセット）", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      await watcher.checkNow();
+      expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=upcoming001" }]);
+    });
+
+    it("予約枠から配信が始まったら接続する", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      await watcher.checkNow();
+      oc.updates = [];
+      yt.live = ok({ videoId: "upcoming001", kind: "live" });
+      expect(await watcher.checkNow()).toMatchObject({ state: "set", kind: "live" });
+      expect(oc.updates).toEqual([{ enabled: true }]);
+    });
+
+    it("自動で接続した配信を手動でオフにしたら、同じ配信ではもうオンにしない", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok(LIVE);
+      await watcher.checkNow();
+      oc.service.enabled = false;
+      oc.updates = [];
+      expect((await watcher.checkNow()).state).toBe("already-set");
+      expect(oc.updates).toEqual([]);
+    });
+
+    it("接続中だった配信を手動でオフにしても戻さない", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.url = "https://www.youtube.com/watch?v=liveNow0001";
+      yt.live = ok(LIVE);
+      await watcher.checkNow();
+      oc.service.enabled = false;
+      expect((await watcher.checkNow()).state).toBe("already-set");
+      expect(oc.updates).toEqual([]);
+    });
+
+    it("次の配信（別の動画）では、また自動で接続する", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok(LIVE);
+      await watcher.checkNow();
+      oc.service.enabled = false;
+      oc.updates = [];
+      yt.live = ok({ videoId: "nextLive001", kind: "live" });
+      await watcher.checkNow();
+      expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=nextLive001" }, { enabled: true }]);
+    });
+
+    it("自動接続がオフなら、配信中でも接続しない", async () => {
+      const { yt, oc, watcher } = setup({ ...CONFIGURED, autoConnectLive: false });
+      oc.service.url = "https://www.youtube.com/watch?v=liveNow0001";
+      oc.service.enabled = false;
+      yt.live = ok(LIVE);
+      expect((await watcher.checkNow()).state).toBe("already-set");
+      expect(oc.updates).toEqual([]);
+    });
+
+    it("接続に失敗したらエラーにし、次の確認でやり直す", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.url = "https://www.youtube.com/watch?v=liveNow0001";
+      oc.service.enabled = false;
+      oc.failUpdate = "network";
+      yt.live = ok(LIVE);
+      expect((await watcher.checkNow()).state).toBe("error");
+      oc.failUpdate = null;
+      expect((await watcher.checkNow()).state).toBe("set");
+      expect(oc.updates).toEqual([{ enabled: true }]);
+    });
+
+    it("予約枠のうちに手動で接続をオフにしても、配信が始まったら接続する", async () => {
+      const { yt, oc, watcher } = setup();
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      await watcher.checkNow();
+      oc.service.enabled = false;
+      oc.updates = [];
+      yt.live = ok({ videoId: "upcoming001", kind: "live" });
+      await watcher.checkNow();
+      expect(oc.updates).toEqual([{ enabled: true }]);
+    });
   });
 
   it("Google ログイン方式は 30 秒、API キー方式は 60 秒未満にしない", async () => {

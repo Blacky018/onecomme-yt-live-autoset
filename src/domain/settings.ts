@@ -17,6 +17,8 @@ export interface Settings {
   intervalSec: number;
   // 配信前に予約枠を先にセットする
   presetUpcoming: boolean;
+  // 配信中の枠を見つけたら、わんコメの枠の接続がオフでもオンにする（同じ配信では 1 回だけ）
+  autoConnectLive: boolean;
 }
 
 export const MIN_INTERVAL_SEC = 30;
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   serviceId: "",
   intervalSec: MIN_INTERVAL_SEC,
   presetUpcoming: true,
+  autoConnectLive: true,
 };
 
 // 実際に使う確認間隔（方式ごとの下限で切り上げ）
@@ -111,7 +114,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): Result<Se
     if (typeof v !== "number" || !Number.isFinite(v)) return err("intervalSec");
     next.intervalSec = Math.min(MAX_INTERVAL_SEC, Math.max(MIN_INTERVAL_SEC, Math.floor(v)));
   }
-  for (const key of ["enabled", "presetUpcoming"] as const) {
+  for (const key of ["enabled", "presetUpcoming", "autoConnectLive"] as const) {
     if (!(key in patch)) continue;
     const v = patch[key];
     if (typeof v !== "boolean") return err(key);

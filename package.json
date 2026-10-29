@@ -1,7 +1,7 @@
 {
   "name": "onecomme-yt-live-autoset",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "YouTube で配信を始めたら、わんコメの YouTube 枠の URL を配信中の枠に自動で書き換えるプラグイン（非公式）",
   "type": "module",
   "scripts": {

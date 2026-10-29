@@ -17,6 +17,7 @@ const FIELD_LABEL: Record<string, string> = {
   intervalSec: "間隔は数字で入力してください",
   enabled: "オン・オフの値が正しくありません",
   presetUpcoming: "オン・オフの値が正しくありません",
+  autoConnectLive: "オン・オフの値が正しくありません",
 };
 
 function el<T extends HTMLElement>(id: string): T {
@@ -52,6 +53,7 @@ const ui = {
   reloadServices: el<HTMLButtonElement>("reload-services"),
   intervalSec: el<HTMLInputElement>("intervalSec"),
   presetUpcoming: el<HTMLInputElement>("presetUpcoming"),
+  autoConnectLive: el<HTMLInputElement>("autoConnectLive"),
   save: el<HTMLButtonElement>("save"),
   check: el<HTMLButtonElement>("check"),
   message: el<HTMLParagraphElement>("message"),
@@ -75,6 +77,7 @@ interface Snapshot {
     serviceId: string;
     intervalSec: number;
     presetUpcoming: boolean;
+    autoConnectLive: boolean;
     hasApiKey: boolean;
     hasClientSecret: boolean;
     loggedIn: boolean;
@@ -107,6 +110,7 @@ function toSnapshot(v: unknown): Snapshot | null {
       serviceId: str(s["serviceId"]),
       intervalSec: typeof s["intervalSec"] === "number" ? s["intervalSec"] : 30,
       presetUpcoming: s["presetUpcoming"] !== false,
+      autoConnectLive: s["autoConnectLive"] !== false,
       hasApiKey: s["hasApiKey"] === true,
       hasClientSecret: s["hasClientSecret"] === true,
       loggedIn: s["loggedIn"] === true,
@@ -179,6 +183,7 @@ function render(snap: Snapshot, fillForm: boolean): void {
     ui.channel.value = s.channel;
     ui.intervalSec.value = String(s.intervalSec);
     ui.presetUpcoming.checked = s.presetUpcoming;
+    ui.autoConnectLive.checked = s.autoConnectLive;
     selectedServiceId = s.serviceId;
     ui.serviceId.value = selectedServiceId;
     showModeSections();
@@ -252,6 +257,7 @@ async function save(e: Event): Promise<void> {
       serviceId: ui.serviceId.value,
       intervalSec: Number.isFinite(interval) ? interval : 30,
       presetUpcoming: ui.presetUpcoming.checked,
+      autoConnectLive: ui.autoConnectLive.checked,
     });
     const snap = toSnapshot(data);
     if (!ok || !snap) {

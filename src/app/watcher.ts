@@ -35,6 +35,8 @@ export const MAX_BACKOFF_SEC = 600;
 export const QUOTA_WAIT_SEC = 3600;
 // 接続中の枠の URL を変えたあと、つなぎ直すまでの待ち時間
 export const RECONNECT_GAP_MS = 1500;
+// 自動接続を済ませた（または接続中を確認した）配信を覚えておく数
+const CONNECTED_MEMORY = 20;
 
 const SOURCE_ERROR_MESSAGE: Record<SourceError, string> = {
   quota: "YouTube API の 1 日の利用上限に達しました。1 時間後にもう一度試します",
@@ -86,6 +88,8 @@ export class LiveWatcher {
   private running = false;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
+  // 同じ配信では自動接続を 1 回だけにする（配信者が手動でオフにしたら戻さない）
+  private readonly connectedVideos: string[] = [];
   private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, kind: null, checkedAt: null };
 
   constructor(
@@ -172,6 +176,11 @@ export class LiveWatcher {
     const service = await this.onecomme.getService(s.serviceId);
     if (!service.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[service.error]);
     if (extractVideoId(service.value.url) === videoId) {
+      if (service.value.enabled) this.rememberConnected(target);
+      if (this.shouldAutoConnect(s, target, service.value.enabled)) {
+        await this.connect(s.serviceId, target);
+        return this.setStatus("set", "配信中の枠に接続しました", target);
+      }
       return this.setStatus("already-set", `${label}がセットされています`, target);
     }
     // 間違えて他サイトの枠を選んでいた場合に上書きしない
@@ -190,10 +199,29 @@ export class LiveWatcher {
     this.log(`set ${target.kind} video ${videoId} to service ${s.serviceId}`);
     if (wasEnabled) {
       await this.timers.sleep(RECONNECT_GAP_MS);
-      const on = await this.onecomme.updateService(s.serviceId, { enabled: true });
-      if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
+      await this.connect(s.serviceId, target);
+    } else if (this.shouldAutoConnect(s, target, false)) {
+      await this.connect(s.serviceId, target);
+      return this.setStatus("set", `${label}をセットして接続しました`, target);
     }
     this.setStatus("set", `${label}をセットしました`, target);
+  }
+
+  private shouldAutoConnect(s: Settings, target: Target, enabled: boolean): boolean {
+    return s.autoConnectLive && target.kind === "live" && !enabled && !this.connectedVideos.includes(target.videoId);
+  }
+
+  private rememberConnected(target: Target): void {
+    if (target.kind !== "live" || this.connectedVideos.includes(target.videoId)) return;
+    this.connectedVideos.push(target.videoId);
+    if (this.connectedVideos.length > CONNECTED_MEMORY) this.connectedVideos.shift();
+  }
+
+  // 接続をオンにする。成功したら覚える（失敗なら次の確認でやり直す）
+  private async connect(serviceId: string, target: Target): Promise<void> {
+    const on = await this.onecomme.updateService(serviceId, { enabled: true });
+    if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
+    this.rememberConnected(target);
   }
 
   private sourceError(kind: SourceError): StepError {

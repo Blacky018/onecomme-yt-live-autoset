@@ -69,6 +69,7 @@ describe("applySettingsPatch", () => {
     [{ intervalSec: Number.NaN }, "intervalSec"],
     [{ enabled: "yes" }, "enabled"],
     [{ presetUpcoming: 1 }, "presetUpcoming"],
+    [{ autoConnectLive: "on" }, "autoConnectLive"],
     [{ channel: 5 }, "channel"],
   ])("不正な値 %j → %s", (patch, field) => {
     expect(applySettingsPatch(base, patch)).toEqual({ ok: false, error: field });
@@ -81,6 +82,11 @@ describe("applySettingsPatch", () => {
   it("予約枠の先取りはオン・オフできる（既定オン）", () => {
     expect(DEFAULT_SETTINGS.presetUpcoming).toBe(true);
     expect(applySettingsPatch(base, { presetUpcoming: false })).toMatchObject({ ok: true, value: { presetUpcoming: false } });
+  });
+
+  it("配信中の自動接続はオン・オフできる（既定オン）", () => {
+    expect(DEFAULT_SETTINGS.autoConnectLive).toBe(true);
+    expect(applySettingsPatch(base, { autoConnectLive: false })).toMatchObject({ ok: true, value: { autoConnectLive: false } });
   });
 
   it("知らない項目は無視", () => {
