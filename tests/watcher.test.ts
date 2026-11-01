@@ -102,10 +102,21 @@ describe("LiveWatcher", () => {
     expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=liveNow0001" }]);
   });
 
-  it("もうセット済みなら書き換えない", async () => {
+  it("もうセット済みなら URL は書き換えない（2 回目以降は何もしない）", async () => {
     const { yt, oc, watcher } = setup();
     oc.service.url = "https://youtube.com/live/liveNow0001?feature=share";
     yt.live = ok(LIVE);
+    await watcher.checkNow();
+    expect(oc.updates.some((u) => u.url !== undefined)).toBe(false);
+    oc.updates = [];
+    expect((await watcher.checkNow()).state).toBe("already-set");
+    expect(oc.updates).toEqual([]);
+  });
+
+  it("予約枠のままなら、セット済み・接続中でも何もしない", async () => {
+    const { yt, oc, watcher } = setup();
+    oc.service.url = "https://www.youtube.com/watch?v=upcoming001";
+    yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
     expect((await watcher.checkNow()).state).toBe("already-set");
     expect(oc.updates).toEqual([]);
   });
@@ -197,14 +208,32 @@ describe("LiveWatcher", () => {
     expect(oc.updates[1]).toEqual({ url: "https://www.youtube.com/watch?v=upcoming001" });
   });
 
-  it("予約枠から配信が始まっても同じ動画なら書き換えない", async () => {
-    const { yt, oc, watcher } = setup();
+  it("予約枠から配信が始まったら、URL は変えずに 1 回だけつなぎ直す", async () => {
+    const { yt, oc, timers, logs, watcher } = setup();
     yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
     await watcher.checkNow();
     oc.updates = [];
+    timers.slept = [];
     yt.live = ok({ videoId: "upcoming001", kind: "live" });
-    expect(await watcher.checkNow()).toMatchObject({ state: "already-set", kind: "live" });
+    expect(await watcher.checkNow()).toMatchObject({ state: "set", kind: "live", message: expect.stringContaining("つなぎ直しました") });
+    expect(oc.updates).toEqual([{ enabled: false }, { enabled: true }]);
+    expect(timers.slept).toHaveLength(1);
+    expect(logs.some((l) => l.includes("reconnected") && l.includes("upcoming001"))).toBe(true);
+    oc.updates = [];
+    expect((await watcher.checkNow()).state).toBe("already-set");
     expect(oc.updates).toEqual([]);
+  });
+
+  it("わんコメを閉じる前に予約枠がセット・接続オンだった（翌日の配信開始でつなぎ直す）", async () => {
+    const { yt, oc, watcher } = setup();
+    oc.service.url = "https://www.youtube.com/watch?v=tomorrow001";
+    oc.service.enabled = true;
+    yt.live = ok({ videoId: "tomorrow001", kind: "upcoming" });
+    await watcher.checkNow();
+    expect(oc.updates).toEqual([]);
+    yt.live = ok({ videoId: "tomorrow001", kind: "live" });
+    await watcher.checkNow();
+    expect(oc.updates).toEqual([{ enabled: false }, { enabled: true }]);
   });
 
   describe("配信中の自動接続", () => {
@@ -247,14 +276,39 @@ describe("LiveWatcher", () => {
       expect(oc.updates).toEqual([]);
     });
 
-    it("接続中だった配信を手動でオフにしても戻さない", async () => {
+    it("つなぎ直した配信を手動でオフにしても戻さない", async () => {
       const { yt, oc, watcher } = setup();
       oc.service.url = "https://www.youtube.com/watch?v=liveNow0001";
       yt.live = ok(LIVE);
       await watcher.checkNow();
       oc.service.enabled = false;
+      oc.updates = [];
       expect((await watcher.checkNow()).state).toBe("already-set");
       expect(oc.updates).toEqual([]);
+    });
+
+    it("自動接続がオフなら、配信開始時のつなぎ直しもしない", async () => {
+      const { yt, oc, watcher } = setup({ ...CONFIGURED, autoConnectLive: false });
+      oc.service.url = "https://www.youtube.com/watch?v=liveNow0001";
+      yt.live = ok(LIVE);
+      expect((await watcher.checkNow()).state).toBe("already-set");
+      expect(oc.updates).toEqual([]);
+    });
+
+    it("自動で接続したことをログに残す", async () => {
+      const { yt, oc, logs, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok(LIVE);
+      await watcher.checkNow();
+      expect(logs.some((l) => l.includes("connected") && l.includes("liveNow0001"))).toBe(true);
+    });
+
+    it("状態が変わったときだけログに残す（毎回は書かない）", async () => {
+      const { yt, logs, watcher } = setup();
+      yt.live = ok(null);
+      await watcher.checkNow();
+      await watcher.checkNow();
+      expect(logs.filter((l) => l.startsWith("status: waiting"))).toHaveLength(1);
     });
 
     it("次の配信（別の動画）では、また自動で接続する", async () => {

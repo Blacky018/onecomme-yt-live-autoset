@@ -88,7 +88,7 @@ export class LiveWatcher {
   private running = false;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
-  // 同じ配信では自動接続を 1 回だけにする（配信者が手動でオフにしたら戻さない）
+  // 配信中の枠ごとに、接続・つなぎ直しは 1 回だけにする（配信者が手動でオフにしたら戻さない）
   private readonly connectedVideos: string[] = [];
   private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, kind: null, checkedAt: null };
 
@@ -157,6 +157,10 @@ export class LiveWatcher {
   }
 
   private setStatus(state: WatchState, message: string, target: Target | null): void {
+    const prev = this.status;
+    if (prev.state !== state || prev.message !== message || prev.videoId !== (target?.videoId ?? null)) {
+      this.log(`status: ${state} ${message}${target ? ` (${target.kind} ${target.videoId})` : ""}`);
+    }
     this.status = { state, message, videoId: target?.videoId ?? null, kind: target?.kind ?? null, checkedAt: this.timers.now() };
   }
 
@@ -176,8 +180,12 @@ export class LiveWatcher {
     const service = await this.onecomme.getService(s.serviceId);
     if (!service.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[service.error]);
     if (extractVideoId(service.value.url) === videoId) {
-      if (service.value.enabled) this.rememberConnected(target);
-      if (this.shouldAutoConnect(s, target, service.value.enabled)) {
+      if (this.isFirstLiveCheck(s, target)) {
+        if (service.value.enabled) {
+          // 接続オンの表示でも、わんコメが待機所への接続をあきらめていることがある。配信開始時に 1 回つなぎ直す
+          await this.reconnect(s.serviceId, target);
+          return this.setStatus("set", "配信が始まったので、接続をつなぎ直しました", target);
+        }
         await this.connect(s.serviceId, target);
         return this.setStatus("set", "配信中の枠に接続しました", target);
       }
@@ -200,15 +208,16 @@ export class LiveWatcher {
     if (wasEnabled) {
       await this.timers.sleep(RECONNECT_GAP_MS);
       await this.connect(s.serviceId, target);
-    } else if (this.shouldAutoConnect(s, target, false)) {
+    } else if (this.isFirstLiveCheck(s, target)) {
       await this.connect(s.serviceId, target);
       return this.setStatus("set", `${label}をセットして接続しました`, target);
     }
     this.setStatus("set", `${label}をセットしました`, target);
   }
 
-  private shouldAutoConnect(s: Settings, target: Target, enabled: boolean): boolean {
-    return s.autoConnectLive && target.kind === "live" && !enabled && !this.connectedVideos.includes(target.videoId);
+  // 自動接続がオンで、この配信をまだ接続・つなぎ直ししていないか
+  private isFirstLiveCheck(s: Settings, target: Target): boolean {
+    return s.autoConnectLive && target.kind === "live" && !this.connectedVideos.includes(target.videoId);
   }
 
   private rememberConnected(target: Target): void {
@@ -222,6 +231,18 @@ export class LiveWatcher {
     const on = await this.onecomme.updateService(serviceId, { enabled: true });
     if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
     this.rememberConnected(target);
+    this.log(`connected service ${serviceId} for ${target.kind} video ${target.videoId}`);
+  }
+
+  // 切断 → 少し待つ → 接続
+  private async reconnect(serviceId: string, target: Target): Promise<void> {
+    const off = await this.onecomme.updateService(serviceId, { enabled: false });
+    if (!off.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[off.error]);
+    await this.timers.sleep(RECONNECT_GAP_MS);
+    const on = await this.onecomme.updateService(serviceId, { enabled: true });
+    if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
+    this.rememberConnected(target);
+    this.log(`reconnected service ${serviceId} for ${target.kind} video ${target.videoId}`);
   }
 
   private sourceError(kind: SourceError): StepError {
