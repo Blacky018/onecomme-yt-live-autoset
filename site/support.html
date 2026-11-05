@@ -46,12 +46,12 @@
 <li>「対象」のページで「アプリを公開」を押し、「本番環境」にする（おすすめ）</li>
 <li>または、「テストユーザー」に自分の Google アカウントを追加する（7 日ごとにログインし直しになります）</li>
 </ul>
-<p>手順は <a href="https://github.com/Blacky018/onecomme-yt-live-autoset#readme">説明書</a>の「準備 2-A」にあります。</p>
+<p>手順は<a href="manual.html#oauth">設定マニュアルの「3. ログイン用の設定をする」</a>にあります。</p>
 </details>
 
 <details class="faq">
 <summary>「アプリを公開」が押せない</summary>
-<p>Google Cloud の「ブランディング」で、ホームページとプライバシーポリシーの URL を入れて「保存」してください。入れる URL は説明書の「準備 2-A」に書いてあります。</p>
+<p>Google Cloud の「ブランディング」で、ホームページとプライバシーポリシーの URL を入れて「保存」してください。入れる URL は<a href="manual.html#oauth">設定マニュアルの「3. ログイン用の設定をする」</a>に書いてあります。</p>
 </details>
 
 <details class="faq">
@@ -62,6 +62,7 @@
 <details class="faq">
 <summary>「Google のログインが切れました」と出る</summary>
 <p>OAuth 同意画面が「本番環境」になっているか確認してから、設定画面でもう一度「Google でログイン」を押してください。「テスト中」のまま使っていると、7 日ごとにログインが切れます。</p>
+<p>「テスト中」のときにログインしていた場合は、あとで「本番環境」に変えても、そのときのログインは 7 日で切れます。本番環境にしたあとで一度ログインし直せば、それ以降は切れなくなります。</p>
 </details>
 
 <h3>配信が見つからない・接続されない</h3>
@@ -103,7 +104,7 @@
 
 <details class="faq">
 <summary>「YouTube Data API v3 が有効になっていません」と出る</summary>
-<p>Google Cloud のプロジェクトで「YouTube Data API v3」を有効にしてください（説明書の「準備 1」）。</p>
+<p>Google Cloud のプロジェクトで「YouTube Data API v3」を有効にしてください（<a href="manual.html#project">設定マニュアルの「2. Google Cloud でプロジェクトを作る」</a>）。</p>
 </details>
 
 <details class="faq">
