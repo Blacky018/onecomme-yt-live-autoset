@@ -246,15 +246,45 @@ describe("LiveWatcher", () => {
       expect(st).toMatchObject({ state: "set", kind: "live", message: expect.stringContaining("接続しました") });
     });
 
-    it("予約枠では接続オフのまま（URL だけ先にセット）", async () => {
+    it("予約枠でも、接続オフなら URL をセットして接続する（待機所のコメントを読む）", async () => {
+      const { yt, oc, logs, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      const st = await watcher.checkNow();
+      expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=upcoming001" }, { enabled: true }]);
+      expect(st).toMatchObject({ state: "set", kind: "upcoming", message: expect.stringContaining("接続しました") });
+      expect(logs.some((l) => l.includes("connected") && l.includes("upcoming001"))).toBe(true);
+    });
+
+    it("予約枠がセット済みで接続オフなら（わんコメの再起動後など）接続する", async () => {
       const { yt, oc, watcher } = setup();
+      oc.service.url = "https://www.youtube.com/watch?v=upcoming001";
+      oc.service.enabled = false;
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      expect(await watcher.checkNow()).toMatchObject({ state: "set", kind: "upcoming" });
+      expect(oc.updates).toEqual([{ enabled: true }]);
+    });
+
+    it("自動で接続した予約枠を手動でオフにしたら、その予約枠のうちはもうオンにしない", async () => {
+      const { yt, oc, watcher } = setup();
+      oc.service.enabled = false;
+      yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
+      await watcher.checkNow();
+      oc.service.enabled = false;
+      oc.updates = [];
+      expect((await watcher.checkNow()).state).toBe("already-set");
+      expect(oc.updates).toEqual([]);
+    });
+
+    it("自動接続がオフなら、予約枠は URL だけセットする", async () => {
+      const { yt, oc, watcher } = setup({ ...CONFIGURED, autoConnectLive: false });
       oc.service.enabled = false;
       yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
       await watcher.checkNow();
       expect(oc.updates).toEqual([{ url: "https://www.youtube.com/watch?v=upcoming001" }]);
     });
 
-    it("予約枠から配信が始まったら接続する", async () => {
+    it("予約枠に接続したあと配信が始まったら、1 回つなぎ直す", async () => {
       const { yt, oc, watcher } = setup();
       oc.service.enabled = false;
       yt.live = ok({ videoId: "upcoming001", kind: "upcoming" });
@@ -262,7 +292,7 @@ describe("LiveWatcher", () => {
       oc.updates = [];
       yt.live = ok({ videoId: "upcoming001", kind: "live" });
       expect(await watcher.checkNow()).toMatchObject({ state: "set", kind: "live" });
-      expect(oc.updates).toEqual([{ enabled: true }]);
+      expect(oc.updates).toEqual([{ enabled: false }, { enabled: true }]);
     });
 
     it("自動で接続した配信を手動でオフにしたら、同じ配信ではもうオンにしない", async () => {

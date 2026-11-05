@@ -73,6 +73,11 @@ function isYouTubeUrlOrEmpty(raw: string): boolean {
   }
 }
 
+// 予約枠のうちの接続と、配信開始時の接続は別に覚える（予約枠で手動オフにしても、配信開始時は接続する）
+function memoryKey(target: Target): string {
+  return `${target.kind}:${target.videoId}`;
+}
+
 class StepError extends Error {
   constructor(
     message: string,
@@ -88,7 +93,7 @@ export class LiveWatcher {
   private running = false;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
-  // 配信中の枠ごとに、接続・つなぎ直しは 1 回だけにする（配信者が手動でオフにしたら戻さない）
+  // 枠ごとに、自動の接続・つなぎ直しは 1 回だけにする（配信者が手動でオフにしたら戻さない）
   private readonly connectedVideos: string[] = [];
   private status: WatchStatus = { state: "stopped", message: "停止中", videoId: null, kind: null, checkedAt: null };
 
@@ -180,14 +185,19 @@ export class LiveWatcher {
     const service = await this.onecomme.getService(s.serviceId);
     if (!service.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[service.error]);
     if (extractVideoId(service.value.url) === videoId) {
-      if (this.isFirstLiveCheck(s, target)) {
-        if (service.value.enabled) {
+      if (this.isFirstCheck(s, target)) {
+        if (service.value.enabled && target.kind === "live") {
           // 接続オンの表示でも、わんコメが待機所への接続をあきらめていることがある。配信開始時に 1 回つなぎ直す
           await this.reconnect(s.serviceId, target);
           return this.setStatus("set", "配信が始まったので、接続をつなぎ直しました", target);
         }
+        if (service.value.enabled) {
+          // 予約枠で、もう接続中。この予約枠は済んだことにする（このあと手動でオフにしたら戻さない）
+          this.remember(target);
+          return this.setStatus("already-set", `${label}がセットされています`, target);
+        }
         await this.connect(s.serviceId, target);
-        return this.setStatus("set", "配信中の枠に接続しました", target);
+        return this.setStatus("set", `${label}に接続しました`, target);
       }
       return this.setStatus("already-set", `${label}がセットされています`, target);
     }
@@ -208,21 +218,22 @@ export class LiveWatcher {
     if (wasEnabled) {
       await this.timers.sleep(RECONNECT_GAP_MS);
       await this.connect(s.serviceId, target);
-    } else if (this.isFirstLiveCheck(s, target)) {
+    } else if (this.isFirstCheck(s, target)) {
       await this.connect(s.serviceId, target);
       return this.setStatus("set", `${label}をセットして接続しました`, target);
     }
     this.setStatus("set", `${label}をセットしました`, target);
   }
 
-  // 自動接続がオンで、この配信をまだ接続・つなぎ直ししていないか
-  private isFirstLiveCheck(s: Settings, target: Target): boolean {
-    return s.autoConnectLive && target.kind === "live" && !this.connectedVideos.includes(target.videoId);
+  // 自動接続がオンで、この枠（予約枠のうち／配信中で別々に数える）をまだ接続・つなぎ直ししていないか
+  private isFirstCheck(s: Settings, target: Target): boolean {
+    return s.autoConnectLive && !this.connectedVideos.includes(memoryKey(target));
   }
 
-  private rememberConnected(target: Target): void {
-    if (target.kind !== "live" || this.connectedVideos.includes(target.videoId)) return;
-    this.connectedVideos.push(target.videoId);
+  private remember(target: Target): void {
+    const key = memoryKey(target);
+    if (this.connectedVideos.includes(key)) return;
+    this.connectedVideos.push(key);
     if (this.connectedVideos.length > CONNECTED_MEMORY) this.connectedVideos.shift();
   }
 
@@ -230,7 +241,7 @@ export class LiveWatcher {
   private async connect(serviceId: string, target: Target): Promise<void> {
     const on = await this.onecomme.updateService(serviceId, { enabled: true });
     if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
-    this.rememberConnected(target);
+    this.remember(target);
     this.log(`connected service ${serviceId} for ${target.kind} video ${target.videoId}`);
   }
 
@@ -241,7 +252,7 @@ export class LiveWatcher {
     await this.timers.sleep(RECONNECT_GAP_MS);
     const on = await this.onecomme.updateService(serviceId, { enabled: true });
     if (!on.ok) throw new StepError(ONECOMME_ERROR_MESSAGE[on.error]);
-    this.rememberConnected(target);
+    this.remember(target);
     this.log(`reconnected service ${serviceId} for ${target.kind} video ${target.videoId}`);
   }
 

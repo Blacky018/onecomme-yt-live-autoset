@@ -149,7 +149,7 @@
 <li>設定画面の上の状態が「待機中」や「セット済み」になれば完了です。</li>
 </ol>
 <div class="figs">
-<figure><img src="img/manual/13-settings-top.png" alt="プラグインの設定画面の上半分" loading="lazy"><figcaption>設定画面（ログインしたあと）。赤枠が入力・操作する場所です</figcaption></figure>
+<figure><img src="img/manual/13-settings-top.png" alt="プラグインの設定画面の上半分" loading="lazy"><figcaption>設定画面（ログインしたあと）。赤枠が入力・操作する場所です（下のほうの項目名は 0.5.1 のときのものです）</figcaption></figure>
 <figure><img src="img/manual/15-unverified.png" alt="このアプリは Google で確認されていません、の画面" loading="lazy"><figcaption>この画面が出たら、左下の「詳細」を押す</figcaption></figure>
 </div>
 
@@ -158,7 +158,7 @@
 
 <div class="table-wrap"><table>
 <tr><th>配信前に予約枠を先にセットする</th><td>オンにすると、開始予定の 24 時間前から予約枠をわんコメにセットします。待機所のコメントも取れます（おすすめ: オン）</td></tr>
-<tr><th>配信が始まったら、わんコメの接続を自動でオン（つなぎ直し）にする</th><td>オンにすると、配信開始時にわんコメの接続を自動でオンにします。接続中ならつなぎ直します（おすすめ: オン）</td></tr>
+<tr><th>予約枠のセット時と配信開始時に、わんコメの接続を自動でオン（つなぎ直し）にする</th><td>オンにすると、予約枠をセットしたときと配信開始時に、わんコメの接続を自動でオンにします。配信開始時に接続中なら、1 回つなぎ直します（おすすめ: オン）</td></tr>
 <tr><th>確認する間隔（秒）</th><td>配信を探す間隔です。初期値の 30 秒のままで大丈夫です</td></tr>
 </table></div>
 
@@ -193,6 +193,8 @@
 <summary>API キー方式で使いたい（Google ログインを使わない）</summary>
 <p>公開の配信だけでよければ、Google ログインの代わりに API キーでも使えます（限定公開・メンバー限定の配信は見つけられません）。2 の手順のあと、Google Cloud の「API とサービス」→「認証情報」→「認証情報を作成」→「API キー」でキーを作り、プラグインの設定画面で「API キー」方式を選んで、キーとチャンネル（<code>@ハンドル</code> かチャンネル URL）を入れて保存します。キーには「API の制限」で YouTube Data API v3 だけを許可しておくのがおすすめです。</p>
 </details>
+
+<p class="muted">Google Cloud・YouTube は Google LLC の商標です。このマニュアルの Google Cloud の画面は、手順の説明のために載せています（メールアドレスなどの個人情報だけ隠しています）。このプラグインは Google とは関係ありません。</p>
 
 <footer>© 2026 りーと ・ <a href="./">ホームへ戻る</a></footer>
 </main>
