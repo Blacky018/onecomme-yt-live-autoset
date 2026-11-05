@@ -16,6 +16,7 @@ interface PluginResponse {
   response: Record<string, unknown>;
 }
 interface Plugin {
+  name: string;
   uid: string;
   version: string;
   author: string;
@@ -109,6 +110,8 @@ describe("E2E: 初めて使う", () => {
     const p = loadPlugin();
     expect(p.uid).toBe("com.riito.yt-live-autoset");
     expect(p.author).toBe("りーと");
+    // YouTube API の規約: アプリ名に YouTube・YT などを使わない
+    expect(p.name).not.toMatch(/yous*-?s*tube|yt/i);
     expect(p.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 

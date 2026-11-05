@@ -119,7 +119,7 @@ async function handle(req: PluginRequest): Promise<PluginResponse> {
 }
 
 const plugin = {
-  name: "YouTube 配信 URL 自動セット（非公式）",
+  name: "配信枠オートセット（非公式）",
   uid: PLUGIN_UID,
   version: PLUGIN_VERSION,
   author: "りーと",

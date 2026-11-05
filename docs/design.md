@@ -184,7 +184,7 @@ API キー方式では公開の動画しか見えず、限定公開・非公開�
   - コミットしていない変更があると作らない。型チェック・テストを通してから作る
   - ビルド時に、配布物に第三者のコード（node_modules）が入っていないことを確かめる（入れるなら THIRD_PARTY_NOTICES が要る）
 - バージョンは `package.json` の `version` だけを書き換える（ビルドで plugin.js に入る）
-- 名前は「YouTube 配信 URL 自動セット（非公式）」。わんコメ・YouTube のロゴは使わない。README に非公式・無関係・免責・YouTube 利用規約と Google プライバシーポリシーへのリンクを書いた
+- 名前は「配信枠オートセット（非公式）」（2026-11-05 に「YouTube 配信 URL 自動セット」から変更。下記 12.2）。わんコメ・YouTube のロゴは使わない。README に非公式・無関係・免責・YouTube 利用規約と Google プライバシーポリシーへのリンクを書いた
 - 開発用依存（typescript / esbuild / vitest / @types/node）は配布物に入らない
 - `state.json`（設定・秘密の値）は配布 zip に入れない。上書き更新しても残る
 
@@ -225,3 +225,10 @@ API キー方式では公開の動画しか見えず、限定公開・非公開�
   - 0.4.0 の watcher に戻すと 11/02 のケースだけ失敗することを確認済み（テストが不具合を検出できる）
   - `npm run package` は E2E が通らないと zip を作らない
 - 実機の確認（本物のわんコメ・YouTube）: `docs/manual_test.md`
+
+### 12.2 名前の変更【決定 2026-11-05】
+
+- YouTube API の規約の一部であるブランドガイドライン（https://developers.google.com/youtube/terms/branding-guidelines）で、アプリ名に「YouTube」「YT」などを使うことが禁止されているため、「YouTube 配信 URL 自動セット」から **「配信枠オートセット」** に変えた。説明文で「YouTube 向け」「YouTube で使える」と書くのは認められている
+- E2E で、プラグイン名に YouTube・YT が入っていないことを確かめる
+- プラグイン ID（`com.riito.yt-live-autoset`）・フォルダ名・GitHub のリポジトリ名は変えない。アプリ名ではなく内部の識別子で、変えると既存の利用者の設定や、利用者が Google Cloud に登録したホームページ・プライバシーポリシーの URL（GitHub Pages）が使えなくなるため
+- 「わんコメ」は OneComme Co.,Ltd. の登録商標。「わんコメ用」と用途を示す書き方にとどめ、ロゴは使わず、非公式・無関係であることを明記する
