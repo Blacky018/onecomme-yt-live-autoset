@@ -45,8 +45,8 @@ YouTube で配信を始めると、わんコメの YouTube 枠の URL を「今�
 1. zip を展開し、中の「yt-live-autoset」フォルダを、わんコメの「プラグイン」画面 →「プラグインフォルダ」に入れます
 2. 「再読み込み」を押して、プラグインを有効にします
 3. プラグイン一覧の URL をクリックして設定画面を開き、Google ログイン（または API キー）と、書き換えるわんコメの枠を設定します
-詳しい手順（Google Cloud の準備・うまくいかないとき）は、zip 内の README.md と下のページをご覧ください。
-https://github.com/Blacky018/onecomme-yt-live-autoset#readme
+詳しい手順（Google Cloud の準備など）は、設定マニュアルをご覧ください。
+https://blacky018.github.io/onecomme-yt-live-autoset/manual.html
 
 ■ 更新するとき
 新しい「yt-live-autoset」フォルダで上書きし、「再読み込み」を押してください。設定はそのまま残ります。

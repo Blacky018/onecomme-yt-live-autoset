@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>設定マニュアル | 配信枠オートセット</title>
+<meta name="description" content="配信枠オートセット（わんコメ用・非公式）のインストールから、Google Cloud の準備、プラグインの設定までの手順です。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><nav><a href="./">ホーム</a><a href="manual.html">設定マニュアル</a><a href="support.html">サポート</a><a href="privacy.html">プライバシーポリシー</a></nav></header>
+<main>
+<h1>設定マニュアル</h1>
+<p class="lead">配信枠オートセット（わんコメ用プラグイン・非公式）</p>
+
+<p>インストールから、配信を始めたら自動でわんコメにつながるようになるまでの手順です。はじめての方で 20〜30 分ほどかかります。設定は最初の 1 回だけで、あとは配信を始めるだけで動きます。</p>
+
+<div class="card">
+<p><strong>全体の流れ</strong></p>
+<ol>
+<li><a href="#install">プラグインをわんコメに入れる</a>（5 分）</li>
+<li><a href="#project">Google Cloud でプロジェクトを作る</a>（5 分）</li>
+<li><a href="#oauth">ログイン用の設定をする</a>（10 分）</li>
+<li><a href="#client">クライアント ID を作る</a>（3 分）</li>
+<li><a href="#plugin">プラグインに入力してログインする</a>（5 分）</li>
+<li><a href="#use">配信する</a></li>
+</ol>
+</div>
+
+<h2>用意するもの</h2>
+<ul>
+<li>わんコメ 5.2 以上（Windows）</li>
+<li>配信しているチャンネルの Google アカウント</li>
+<li>プラグインの zip（<a href="https://github.com/Blacky018/onecomme-yt-live-autoset/releases/latest">ダウンロードページ</a>、または BOOTH）</li>
+</ul>
+<p class="note">Google Cloud は Google のサービスを使うための管理画面です。このプラグインの使い方なら<strong>無料</strong>で、クレジットカードの登録も要りません。</p>
+
+<!-- ===================================================== -->
+<h2 id="install">1. プラグインをわんコメに入れる</h2>
+<ol class="steps">
+<li>ダウンロードした zip を右クリックして「<strong>すべて展開</strong>」を押します。</li>
+<li>わんコメの「<strong>プラグイン</strong>」画面を開き、「<strong>プラグインフォルダ</strong>」ボタンを押します。フォルダが開きます。</li>
+<li>展開したフォルダの中の <code>yt-live-autoset</code> フォルダを、開いたプラグインフォルダにドラッグして入れます。</li>
+<li>わんコメの「プラグイン」画面で「<strong>再読み込み</strong>」を押し、「配信枠オートセット（非公式）」を<strong>有効</strong>にします。</li>
+</ol>
+<p class="warn"><strong>よくある間違い:</strong> <code>yt-live-autoset-0.5.1</code> のような外側のフォルダごと入れると動きません。プラグインフォルダを開いたとき、<code>yt-live-autoset</code> の中にすぐ <code>plugin.js</code> がある形が正解です。</p>
+
+<!-- ===================================================== -->
+<h2 id="project">2. Google Cloud でプロジェクトを作る</h2>
+<p>ここからは、配信しているチャンネルの Google アカウントでログインした状態で進めます。</p>
+<ol class="steps">
+<li><a href="https://console.cloud.google.com/projectcreate">Google Cloud の「新しいプロジェクト」画面</a>を開きます。はじめて使う場合は、利用規約への同意を求められるので、内容を確認して同意します。</li>
+<li>「プロジェクト名」に分かりやすい名前（例: <code>haishinwaku-autoset</code>）を入れて「<strong>作成</strong>」を押します。</li>
+<li>画面の左上（Google Cloud のロゴの横）に、作ったプロジェクトの名前が出ていることを確認します。出ていなければ、そこを押してプロジェクトを選びます。</li>
+</ol>
+<p class="muted">作成のあとに「権限が拒否されました」と出ることがあります。プロジェクトはできているので、左上でプロジェクトを選び直せば先に進めます。</p>
+
+<h3>YouTube Data API を有効にする</h3>
+<ol class="steps">
+<li><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com">YouTube Data API v3 のページ</a>を開きます（左上が作ったプロジェクトになっているか確認）。</li>
+<li>「<strong>有効にする</strong>」を押します。画面が切り替われば完了です。</li>
+</ol>
+
+<!-- ===================================================== -->
+<h2 id="oauth">3. ログイン用の設定をする</h2>
+<p>プラグインが「あなたの YouTube の配信一覧を見る」ための設定です。</p>
+
+<h3>3-1. アプリの情報を入れる</h3>
+<ol class="steps">
+<li><a href="https://console.cloud.google.com/auth/overview">Google Auth Platform</a> を開き、「<strong>開始</strong>」を押します。</li>
+<li><strong>アプリ情報</strong>
+  <ul>
+  <li>アプリ名: <code>配信枠オートセット</code>（好きな名前で OK。ログイン画面に表示されます。「YouTube」「Google」という言葉は入れられません）</li>
+  <li>ユーザー サポートメール: 自分のメールアドレスを選ぶ</li>
+  </ul>
+  「次へ」を押します。</li>
+<li><strong>対象</strong>: 「<strong>外部</strong>」を選んで「次へ」。</li>
+<li><strong>連絡先情報</strong>: 自分のメールアドレスを入れて「次へ」。</li>
+<li><strong>終了</strong>: 「Google API サービスのユーザーデータに関するポリシー」を確認してチェックを入れ、「続行」→「<strong>作成</strong>」を押します。</li>
+</ol>
+
+<h3>3-2. ホームページとプライバシーポリシーを入れる</h3>
+<ol class="steps">
+<li>左のメニューの「<strong>ブランディング</strong>」を開きます。</li>
+<li>「アプリのドメイン」に次の 2 つを貼り付けます。
+  <div class="table-wrap"><table>
+  <tr><th>アプリケーションのホームページ</th><td><code>https://blacky018.github.io/onecomme-yt-live-autoset/</code></td></tr>
+  <tr><th>アプリケーション プライバシー ポリシー リンク</th><td><code>https://blacky018.github.io/onecomme-yt-live-autoset/privacy.html</code></td></tr>
+  </table></div>
+</li>
+<li>「承認済みドメイン」の「<strong>ドメインの追加</strong>」を押し、<code>blacky018.github.io</code> を入れます。</li>
+<li>一番下の「<strong>保存</strong>」を押します。</li>
+</ol>
+<p class="warn"><strong>ロゴは入れないでください。</strong>入れると Google の審査が必要になり、審査が終わるまでログインできなくなります。</p>
+
+<h3>3-3. 本番環境にする（大事）</h3>
+<ol class="steps">
+<li>左のメニューの「<strong>対象</strong>」を開きます。</li>
+<li>公開ステータスの「<strong>アプリを公開</strong>」を押し、確認画面で「<strong>確認</strong>」を押します。</li>
+<li>公開ステータスが「<strong>本番環境</strong>」になれば完了です。</li>
+</ol>
+<p class="warn"><strong>必ずログインする前に本番環境にしてください。</strong>「テスト中」のままログインすると、7 日でログインが切れます。あとから本番環境にしても、テスト中にしたログインは 7 日で切れるので、そのときはもう一度ログインし直してください。</p>
+<p class="muted">自分だけで使うアプリなので、Google の審査（確認）を受ける必要はありません。</p>
+
+<!-- ===================================================== -->
+<h2 id="client">4. クライアント ID を作る</h2>
+<ol class="steps">
+<li>左のメニューの「<strong>クライアント</strong>」を開き、「<strong>クライアントを作成</strong>」を押します。</li>
+<li>アプリケーションの種類: 「<strong>デスクトップ アプリ</strong>」を選びます。</li>
+<li>名前: 分かりやすい名前（例: <code>わんコメ 配信枠オートセット</code>）。「このクライアントを AI 対応エージェントに使用する」にはチェックを入れません。</li>
+<li>「<strong>作成</strong>」を押すと、<strong>クライアント ID</strong> と <strong>クライアント シークレット</strong> が表示されます。「JSON をダウンロード」で控えておくと安心です。</li>
+</ol>
+<p class="warn"><strong>クライアント シークレットは人に見せないでください。</strong>スクリーンショットを送るとき、配信画面に映すときも注意してください。</p>
+
+<!-- ===================================================== -->
+<h2 id="plugin">5. プラグインに入力してログインする</h2>
+<ol class="steps">
+<li>わんコメの「プラグイン」画面の一覧で、このプラグインの <strong>URL をクリック</strong>すると、設定画面がブラウザで開きます。<br>
+<span class="muted">（直接開く場合: <code>http://localhost:11180/plugins/com.riito.yt-live-autoset/index.html</code>。わんコメを起動している PC で開いてください）</span></li>
+<li>「配信の探し方」で「<strong>Google ログイン</strong>」を選びます。</li>
+<li>「OAuth クライアント ID」と「OAuth クライアント シークレット」に、4 で表示されたものを貼り付けます。</li>
+<li>「<strong>書き換えるわんコメの枠</strong>」で、わんコメに登録してある YouTube の枠を選びます。出てこないときは「一覧を更新」を押してください。<br>
+<span class="muted">わんコメに YouTube の枠がまだない場合は、先にわんコメで YouTube の枠を 1 つ追加しておきます（URL は何でも OK。プラグインが書き換えます）。</span></li>
+<li>「<strong>保存</strong>」を押します。</li>
+<li>「<strong>Google でログイン</strong>」を押し、配信しているチャンネルのアカウントを選びます。</li>
+<li>「このアプリは Google で確認されていません」と出たら、左下の「<strong>詳細</strong>」→「<strong>配信枠オートセット（安全ではないページ）に移動</strong>」を押します。<br>
+<span class="muted">自分で作ったアプリなので問題ありません。求める許可は「YouTube アカウントの表示」（読み取り専用）だけです。</span></li>
+<li>許可の画面で「<strong>続行</strong>」を押し、「ログインしました」と出たらそのタブを閉じます。</li>
+<li>設定画面の上の状態が「待機中」や「セット済み」になれば完了です。</li>
+</ol>
+
+<h3>そのほかの設定</h3>
+<div class="table-wrap"><table>
+<tr><th>配信前に予約枠を先にセットする</th><td>オンにすると、開始予定の 24 時間前から予約枠をわんコメにセットします。待機所のコメントも取れます（おすすめ: オン）</td></tr>
+<tr><th>配信が始まったら、わんコメの接続を自動でオン（つなぎ直し）にする</th><td>オンにすると、配信開始時にわんコメの接続を自動でオンにします。接続中ならつなぎ直します（おすすめ: オン）</td></tr>
+<tr><th>確認する間隔（秒）</th><td>配信を探す間隔です。初期値の 30 秒のままで大丈夫です</td></tr>
+</table></div>
+
+<!-- ===================================================== -->
+<h2 id="use">6. 配信する</h2>
+<p>設定が終わったら、わんコメを起動しておき、YouTube で配信を始めるだけです。</p>
+<ul>
+<li><strong>予約枠から配信する場合</strong>: 開始予定の 24 時間前から、その枠がわんコメにセットされます。配信が始まると、30 秒ほどでわんコメの接続がオンになります。</li>
+<li><strong>予約なしで「今すぐ配信」する場合</strong>: 配信開始から 30 秒〜1 分ほどで、わんコメの枠が切り替わって接続されます。</li>
+<li>急ぐときは、設定画面の「<strong>今すぐ確認</strong>」を押してください。</li>
+</ul>
+
+<h3>状態の見方（設定画面の上）</h3>
+<div class="table-wrap"><table>
+<tr><th>待機中</th><td>配信中・まもなく始まる予約枠がありません</td></tr>
+<tr><th>セット済み</th><td>配信中の枠がわんコメにセットされています</td></tr>
+<tr><th>セット済み（予約枠）</th><td>配信開始前の予約枠を先にセットしています</td></tr>
+<tr><th>設定が必要</th><td>足りない設定があります（メッセージを見てください）</td></tr>
+<tr><th>エラー</th><td>問題が起きています（メッセージを見てください）</td></tr>
+</table></div>
+
+<p class="note">わんコメを無料版で使っている場合は、配信の概要欄などに、わんコメのクレジット（例: 配信者のためのコメントアプリ「わんコメ」https://onecomme.com）を書いてください。詳しくは<a href="https://onecomme.com/terms">わんコメの利用規約</a>をご覧ください。</p>
+
+<!-- ===================================================== -->
+<h2>更新するとき</h2>
+<p>新しい zip の <code>yt-live-autoset</code> フォルダで、プラグインフォルダの中の同じフォルダを上書きし、わんコメの「再読み込み」を押します。設定とログインはそのまま残ります。</p>
+
+<h2>うまくいかないとき</h2>
+<p><a href="support.html">サポート・よくある質問</a>をご覧ください。解決しないときの送り先（フォーム）もあります。</p>
+
+<details class="faq">
+<summary>API キー方式で使いたい（Google ログインを使わない）</summary>
+<p>公開の配信だけでよければ、Google ログインの代わりに API キーでも使えます（限定公開・メンバー限定の配信は見つけられません）。2 の手順のあと、Google Cloud の「API とサービス」→「認証情報」→「認証情報を作成」→「API キー」でキーを作り、プラグインの設定画面で「API キー」方式を選んで、キーとチャンネル（<code>@ハンドル</code> かチャンネル URL）を入れて保存します。キーには「API の制限」で YouTube Data API v3 だけを許可しておくのがおすすめです。</p>
+</details>
+
+<footer>© 2026 りーと ・ <a href="./">ホームへ戻る</a></footer>
+</main>
+</body>
+</html>
