@@ -53,6 +53,8 @@
 <li>「プロジェクト名」に分かりやすい名前（例: <code>haishinwaku-autoset</code>）を入れて「<strong>作成</strong>」を押します。</li>
 <li>画面の左上（Google Cloud のロゴの横）に、作ったプロジェクトの名前が出ていることを確認します。出ていなければ、そこを押してプロジェクトを選びます。</li>
 </ol>
+<figure><img src="img/manual/01-project-create.png" alt="新しいプロジェクトの画面。プロジェクト名を入れて作成を押す" loading="lazy"><figcaption>プロジェクト名を入れて「作成」</figcaption></figure>
+
 <p class="muted">作成のあとに「権限が拒否されました」と出ることがあります。プロジェクトはできているので、左上でプロジェクトを選び直せば先に進めます。</p>
 
 <h3>YouTube Data API を有効にする</h3>
@@ -60,6 +62,8 @@
 <li><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com">YouTube Data API v3 のページ</a>を開きます（左上が作ったプロジェクトになっているか確認）。</li>
 <li>「<strong>有効にする</strong>」を押します。画面が切り替われば完了です。</li>
 </ol>
+<figure><img src="img/manual/02-api-enable.png" alt="YouTube Data API v3 のページの「有効にする」ボタン" loading="lazy"><figcaption>「有効にする」を押す</figcaption></figure>
+
 
 <!-- ===================================================== -->
 <h2 id="oauth">3. ログイン用の設定をする</h2>
@@ -78,6 +82,13 @@
 <li><strong>連絡先情報</strong>: 自分のメールアドレスを入れて「次へ」。</li>
 <li><strong>終了</strong>: 「Google API サービスのユーザーデータに関するポリシー」を確認してチェックを入れ、「続行」→「<strong>作成</strong>」を押します。</li>
 </ol>
+<div class="figs">
+<figure><img src="img/manual/03-auth-start.png" alt="Google Auth Platform の概要画面の「開始」ボタン" loading="lazy"><figcaption>① 「開始」を押す</figcaption></figure>
+<figure><img src="img/manual/04-app-info.png" alt="アプリ情報の入力欄。アプリ名とサポートメール" loading="lazy"><figcaption>② アプリ名とメールアドレスを入れて「次へ」</figcaption></figure>
+<figure><img src="img/manual/05-audience.png" alt="対象の選択。外部を選ぶ" loading="lazy"><figcaption>③ 「外部」を選んで「次へ」</figcaption></figure>
+<figure><img src="img/manual/06-contact.png" alt="連絡先情報のメールアドレス欄" loading="lazy"><figcaption>④ メールアドレスを入れて「次へ」</figcaption></figure>
+<figure><img src="img/manual/07-agree.png" alt="ポリシーへの同意のチェックと作成ボタン" loading="lazy"><figcaption>⑤ チェックを入れて「続行」→「作成」</figcaption></figure>
+</div>
 
 <h3>3-2. ホームページとプライバシーポリシーを入れる</h3>
 <ol class="steps">
@@ -91,6 +102,8 @@
 <li>「承認済みドメイン」の「<strong>ドメインの追加</strong>」を押し、<code>blacky018.github.io</code> を入れます。</li>
 <li>一番下の「<strong>保存</strong>」を押します。</li>
 </ol>
+<figure><img src="img/manual/08-branding.png" alt="ブランディング画面。ホームページ・プライバシーポリシー・承認済みドメインを入れて保存" loading="lazy"><figcaption>ホームページ・プライバシーポリシー・承認済みドメインを入れて「保存」</figcaption></figure>
+
 <p class="warn"><strong>ロゴは入れないでください。</strong>入れると Google の審査が必要になり、審査が終わるまでログインできなくなります。</p>
 
 <h3>3-3. 本番環境にする（大事）</h3>
@@ -99,6 +112,11 @@
 <li>公開ステータスの「<strong>アプリを公開</strong>」を押し、確認画面で「<strong>確認</strong>」を押します。</li>
 <li>公開ステータスが「<strong>本番環境</strong>」になれば完了です。</li>
 </ol>
+<div class="figs">
+<figure><img src="img/manual/09-audience.png" alt="対象の画面の「アプリを公開」ボタン" loading="lazy"><figcaption>① 「アプリを公開」を押す</figcaption></figure>
+<figure><img src="img/manual/10-publish-confirm.png" alt="本番環境に push しますか、の確認画面" loading="lazy"><figcaption>② 「確認」を押す</figcaption></figure>
+<figure><img src="img/manual/11-production.png" alt="公開ステータスが本番環境になった画面" loading="lazy"><figcaption>③ 「本番環境」になれば完了</figcaption></figure>
+</div>
 <p class="warn"><strong>必ずログインする前に本番環境にしてください。</strong>「テスト中」のままログインすると、7 日でログインが切れます。あとから本番環境にしても、テスト中にしたログインは 7 日で切れるので、そのときはもう一度ログインし直してください。</p>
 <p class="muted">自分だけで使うアプリなので、Google の審査（確認）を受ける必要はありません。</p>
 
@@ -110,6 +128,8 @@
 <li>名前: 分かりやすい名前（例: <code>わんコメ 配信枠オートセット</code>）。「このクライアントを AI 対応エージェントに使用する」にはチェックを入れません。</li>
 <li>「<strong>作成</strong>」を押すと、<strong>クライアント ID</strong> と <strong>クライアント シークレット</strong> が表示されます。「JSON をダウンロード」で控えておくと安心です。</li>
 </ol>
+<figure><img src="img/manual/12-client-create.png" alt="OAuth クライアント ID の作成画面。デスクトップ アプリを選び名前を入れる" loading="lazy"><figcaption>種類「デスクトップ アプリ」と名前を入れて「作成」</figcaption></figure>
+
 <p class="warn"><strong>クライアント シークレットは人に見せないでください。</strong>スクリーンショットを送るとき、配信画面に映すときも注意してください。</p>
 
 <!-- ===================================================== -->
@@ -128,8 +148,14 @@
 <li>許可の画面で「<strong>続行</strong>」を押し、「ログインしました」と出たらそのタブを閉じます。</li>
 <li>設定画面の上の状態が「待機中」や「セット済み」になれば完了です。</li>
 </ol>
+<div class="figs">
+<figure><img src="img/manual/13-settings-top.png" alt="プラグインの設定画面の上半分" loading="lazy"><figcaption>設定画面（ログインしたあと）。赤枠が入力・操作する場所です</figcaption></figure>
+<figure><img src="img/manual/15-unverified.png" alt="このアプリは Google で確認されていません、の画面" loading="lazy"><figcaption>この画面が出たら、左下の「詳細」を押す</figcaption></figure>
+</div>
 
 <h3>そのほかの設定</h3>
+<figure><img src="img/manual/14-settings-bottom.png" alt="プラグインの設定画面の下半分" loading="lazy"><figcaption>2 つのチェックはオンのままがおすすめ。変えたら「保存」</figcaption></figure>
+
 <div class="table-wrap"><table>
 <tr><th>配信前に予約枠を先にセットする</th><td>オンにすると、開始予定の 24 時間前から予約枠をわんコメにセットします。待機所のコメントも取れます（おすすめ: オン）</td></tr>
 <tr><th>配信が始まったら、わんコメの接続を自動でオン（つなぎ直し）にする</th><td>オンにすると、配信開始時にわんコメの接続を自動でオンにします。接続中ならつなぎ直します（おすすめ: オン）</td></tr>

@@ -52,3 +52,7 @@ a.button { display: inline-block; background: var(--accent); color: #fff; text-d
 a.button:hover { opacity: 0.9; }
 ol.steps > li { margin: 6px 0; }
 ol.steps ul { margin: 4px 0; }
+figure { margin: 12px 0 20px; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+figcaption { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+.figs { display: grid; gap: 4px; }
