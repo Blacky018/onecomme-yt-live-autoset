@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>サポート・よくある質問 | 配信枠オートセット</title>
+<meta name="description" content="配信枠オートセット（わんコメ用・非公式）のよくある質問と、不具合・質問の送り先です。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><nav><a href="./">ホーム</a><a href="support.html">サポート</a><a href="privacy.html">プライバシーポリシー</a></nav></header>
+<main>
+<h1>サポート・よくある質問</h1>
+<p class="lead">配信枠オートセット（わんコメ用プラグイン・非公式）</p>
+
+<p>うまく動かないときは、まず下の「よくある質問」をご覧ください。解決しないときは、<a href="#contact">ページ下の送り先</a>から送ってください。</p>
+<p class="note">このプラグインは非公式です。わんコメ・YouTube・Google の各社には問い合わせないでください。</p>
+
+<h2>よくある質問</h2>
+
+<h3>インストール・設定画面</h3>
+
+<details class="faq">
+<summary>設定画面を開くと「Notfound plugin」と出る</summary>
+<p>わんコメがプラグインを読み込めていません。次を確認してください。</p>
+<ul>
+<li>わんコメの「プラグイン」画面 →「プラグインフォルダ」を開き、その中に <code>yt-live-autoset</code> フォルダがあり、さらにその中に <code>plugin.js</code> があるか。<br>
+<code>yt-live-autoset-0.5.1</code> のような外側のフォルダごと入れてしまうと読み込まれません</li>
+<li>フォルダを入れたあと、プラグイン画面の「再読み込み」を押したか</li>
+<li>プラグイン一覧でこのプラグインが有効になっているか</li>
+</ul>
+<p>設定画面は、プラグイン一覧に出ている URL をクリックして開くのが確実です。</p>
+</details>
+
+<details class="faq">
+<summary>新しいバージョンに更新したい</summary>
+<p>配布されている zip の中の <code>yt-live-autoset</code> フォルダで、プラグインフォルダの中の同じ名前のフォルダを上書きし、「再読み込み」を押してください。設定やログインはそのまま残ります。</p>
+</details>
+
+<h3>Google ログイン</h3>
+
+<details class="faq">
+<summary>ログインすると「アクセスをブロック」「エラー 403: access_denied」と出る</summary>
+<p>Google Cloud の「OAuth 同意画面」が「テスト中」のままになっています。次のどちらかをしてください。</p>
+<ul>
+<li>「対象」のページで「アプリを公開」を押し、「本番環境」にする（おすすめ）</li>
+<li>または、「テストユーザー」に自分の Google アカウントを追加する（7 日ごとにログインし直しになります）</li>
+</ul>
+<p>手順は <a href="https://github.com/Blacky018/onecomme-yt-live-autoset#readme">説明書</a>の「準備 2-A」にあります。</p>
+</details>
+
+<details class="faq">
+<summary>「アプリを公開」が押せない</summary>
+<p>Google Cloud の「ブランディング」で、ホームページとプライバシーポリシーの URL を入れて「保存」してください。入れる URL は説明書の「準備 2-A」に書いてあります。</p>
+</details>
+
+<details class="faq">
+<summary>「このアプリは Google で確認されていません」と出る</summary>
+<p>自分で作った Google Cloud のアプリなので、この画面が出るのは正常です。「詳細」→「（アプリ名）（安全ではないページ）に移動」と進んでください。ここで使うのは、あなた自身が作ったアプリです。</p>
+</details>
+
+<details class="faq">
+<summary>「Google のログインが切れました」と出る</summary>
+<p>OAuth 同意画面が「本番環境」になっているか確認してから、設定画面でもう一度「Google でログイン」を押してください。「テスト中」のまま使っていると、7 日ごとにログインが切れます。</p>
+</details>
+
+<h3>配信が見つからない・接続されない</h3>
+
+<details class="faq">
+<summary>「待機中」のまま、配信が見つからない</summary>
+<ul>
+<li><strong>API キー方式</strong>の場合、見つけられるのは<strong>公開</strong>の配信だけです。限定公開・メンバー限定の配信は、Google ログイン方式にしてください</li>
+<li>予約枠は、開始予定の 24 時間前になるまでセットされません</li>
+<li>API キー方式の場合、設定画面の「チャンネル」が配信しているチャンネルになっているか確認してください。Google ログイン方式の場合は、配信しているチャンネルの Google アカウントでログインしているか確認してください</li>
+</ul>
+</details>
+
+<details class="faq">
+<summary>URL はセットされたのに、コメントが流れない</summary>
+<ul>
+<li>わんコメの枠の接続を、一度オフにしてからオンにしてみてください</li>
+<li>「チャットは現在ご利用いただけません」と出る場合は、配信が<strong>非公開</strong>になっていないか確認してください。非公開の配信は YouTube 側でチャットが使えません。「今すぐ配信」は前回の公開設定を引き継ぐことがあります</li>
+<li>設定画面の「配信が始まったら、わんコメの接続を自動でオン（つなぎ直し）にする」にチェックが入っているか確認してください</li>
+</ul>
+</details>
+
+<details class="faq">
+<summary>予約枠で配信を始めたのに、自動で接続されなかった</summary>
+<p>0.4.0 以前のバージョンでは、予約枠をあらかじめセットしていた場合に、配信開始時に接続されないことがありました。0.4.1 以降で直っているので、最新版に更新してください。</p>
+</details>
+
+<details class="faq">
+<summary>「YouTube の枠ではないため書き換えません」と出る</summary>
+<p>設定画面の「書き換えるわんコメの枠」に、ツイキャスなど YouTube 以外の枠を選んでいます。YouTube の枠を選び直してください。</p>
+</details>
+
+<h3>そのほかのエラー</h3>
+
+<details class="faq">
+<summary>「API キーが正しくありません」と出る</summary>
+<p>API キーのコピーミスがないか、Google Cloud でキーに「API の制限」をかけている場合は YouTube Data API v3 が許可されているかを確認してください。</p>
+</details>
+
+<details class="faq">
+<summary>「YouTube Data API v3 が有効になっていません」と出る</summary>
+<p>Google Cloud のプロジェクトで「YouTube Data API v3」を有効にしてください（説明書の「準備 1」）。</p>
+</details>
+
+<details class="faq">
+<summary>「1 日の利用上限に達しました」と出る</summary>
+<p>設定画面で「確認する間隔（秒）」を長くしてください。上限は毎日リセットされます（日本時間の 16 時〜17 時ごろ）。</p>
+</details>
+
+<h2 id="contact">解決しないとき（不具合・質問の送り先）</h2>
+
+<div class="card">
+<p><strong>送るときに書いてほしいこと</strong></p>
+<ul>
+<li>どうなったか（画面に出たメッセージはそのまま）</li>
+<li>いつ起きたか（日時・配信枠が予約枠かどうか）</li>
+<li>プラグインのバージョン（プラグイン一覧に出ています）とわんコメのバージョン</li>
+</ul>
+<p class="warn"><strong>API キー・クライアント シークレット・メールアドレスは送らないでください。</strong>スクリーンショットを送るときも、これらが写っていないか確認してください。</p>
+</div>
+
+<!-- Google フォームができたら、この部分をフォームの埋め込みとリンクに差し替える -->
+<div class="card">
+<p><strong>BOOTH のメッセージ</strong><br>
+<a href="https://riito-lab.booth.pm/">BOOTH のショップページ</a>の下にある「ショップへのお問い合わせ」から送ってください（pixiv のアカウントでログインが必要です）。</p>
+<p class="muted">送信フォーム（アカウントなしで送れるもの）は準備中です。</p>
+</div>
+
+<p class="muted">GitHub に慣れている方は、<a href="https://github.com/Blacky018/onecomme-yt-live-autoset/issues">GitHub の Issues</a> でも受け付けています。</p>
+<p class="muted">個人で作っているため、返信に数日かかることがあります。</p>
+
+<footer>© 2026 りーと ・ <a href="./">ホームへ戻る</a></footer>
+</main>
+</body>
+</html>

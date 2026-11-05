@@ -69,9 +69,10 @@ https://github.com/Blacky018/onecomme-yt-live-autoset#readme
 ・YouTube やわんコメの仕様変更により、予告なく動かなくなる可能性があります
 ・「わんコメ」は OneComme Co.,Ltd. の登録商標です。YouTube は Google LLC の商標です
 
-■ 不具合・質問
-GitHub の Issues へお願いします: https://github.com/Blacky018/onecomme-yt-live-autoset/issues
-（BOOTH のメッセージでも受け付けますが、返信が遅れることがあります）
+■ うまく動かないとき・質問
+よくある質問と送り先は、こちらのページにまとめています。
+https://blacky018.github.io/onecomme-yt-live-autoset/support.html
+このショップへのメッセージ（ショップページ下の「ショップへのお問い合わせ」）でも受け付けます。
 
 ■ ファイルの確認（SHA-256）
 0.5.1: 2f06c52b35626eb1ed47ed365b509721212ebf6403d392e136670609b4859679

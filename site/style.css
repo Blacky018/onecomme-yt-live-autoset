@@ -41,3 +41,10 @@ th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; ver
 th { background: var(--note); }
 .table-wrap { overflow-x: auto; }
 footer { color: var(--muted); font-size: 0.9rem; margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; }
+h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+details.faq { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; }
+details.faq summary { cursor: pointer; padding: 10px 16px; font-weight: 600; }
+details.faq[open] summary { border-bottom: 1px solid var(--line); }
+details.faq > :not(summary) { margin-left: 16px; margin-right: 16px; }
+.warn { background: var(--note); border-radius: 8px; padding: 8px 12px; }
+.muted { color: var(--muted); font-size: 0.95rem; }
