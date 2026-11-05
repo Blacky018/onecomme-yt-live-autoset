@@ -44,7 +44,7 @@ YouTube で配信を始めると、わんコメの YouTube 枠の URL を「今�
 ■ 使い方
 1. zip を展開し、中の「yt-live-autoset」フォルダを、わんコメの「プラグイン」画面 →「プラグインフォルダ」に入れます
 2. 「再読み込み」を押して、プラグインを有効にします
-3. 設定画面で Google ログイン（または API キー）と、書き換えるわんコメの枠を設定します
+3. プラグイン一覧の URL をクリックして設定画面を開き、Google ログイン（または API キー）と、書き換えるわんコメの枠を設定します
 詳しい手順（Google Cloud の準備・うまくいかないとき）は、zip 内の README.md と下のページをご覧ください。
 https://github.com/Blacky018/onecomme-yt-live-autoset#readme
 
@@ -55,6 +55,13 @@ https://github.com/Blacky018/onecomme-yt-live-autoset#readme
 このプラグインはお使いの PC の中だけで動き、利用者の情報を作者や第三者に送りません。
 プライバシーポリシー: https://blacky018.github.io/onecomme-yt-live-autoset/privacy.html
 本プラグインは YouTube API サービスを使用します。YouTube 利用規約（https://www.youtube.com/t/terms）と Google プライバシー ポリシー（https://policies.google.com/privacy）が適用されます。
+
+■ わんコメのクレジット表記について
+このプラグインは、わんコメの HTTP API を使います。わんコメを無料版として使っている場合は、配信の概要欄などに、わんコメを使っていることのクレジットを書いてください（わんコメの利用規約「クレジット表記について」）。
+記載例: 配信者のためのコメントアプリ「わんコメ」https://onecomme.com
+・FANBOX でわんコメを支援している場合は任意です
+・概要欄などの入力欄がない場合や、文字数制限が厳しい場合は書かなくてかまいません
+最新の条件は、わんコメの利用規約（https://onecomme.com/terms）をご確認ください。
 
 ■ ライセンス・免責
 ・MIT ライセンスです。ソースコードは GitHub で公開しています
@@ -70,6 +77,7 @@ GitHub の Issues へお願いします: https://github.com/Blacky018/onecomme-y
 0.5.0: 8a3a182990fc41ab9d8155ea04f5c4908ea2d5be0690f4dbb69421c86d6a4990
 
 ■ 更新履歴
+・0.5.1（2026-11-05）説明書に、わんコメのクレジット表記の案内と、プラグイン一覧から設定画面を開く方法を追加
 ・0.5.0（2026-11-05）名前を「配信枠オートセット」に変更（YouTube API の規約に合わせるため。機能の変更はありません）
 ・0.4.1（2026-11-02）予約枠から配信したとき、自動で接続されないことがある問題を修正
 ・0.4.0（2026-10-29）配信が始まったら、わんコメの接続を自動でオンにする機能を追加

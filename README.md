@@ -48,8 +48,9 @@ YouTube API は 1 日 10,000 まで無料で使えます。どちらの方式も
 3. 展開したフォルダの中にある **`yt-live-autoset` フォルダ** を、開いたプラグインフォルダにドラッグ＆ドロップでコピーします
    - 正しく入ると `plugins\yt-live-autoset\plugin.js` という並びになります。`plugins\yt-live-autoset-0.3.0\...` のように**外側のフォルダごと入れると動きません**
 4. 「プラグイン」画面の **「再読み込み」** を押し（またはわんコメを再起動し）、「配信枠オートセット（非公式）」を有効にします
-5. ブラウザで設定画面を開きます: <http://localhost:11180/plugins/com.riito.yt-live-autoset/index.html>
-   - `localhost` は「自分の PC」という意味です。わんコメを起動している PC で開いてください
+5. 「プラグイン」画面の一覧で、このプラグインの **URL をクリック**すると設定画面が開きます
+   - ブラウザで直接開く場合: <http://localhost:11180/plugins/com.riito.yt-live-autoset/index.html>（`localhost` は「自分の PC」という意味です。わんコメを起動している PC で開いてください）
+   - わんコメ公式の説明: [プラグインの導入](https://onecomme.com/docs/feature/plugins)
 
 > プラグインフォルダは、エクスプローラーのアドレス欄に `%APPDATA%\onecomme\plugins` と入力して Enter でも開けます。
 
@@ -158,6 +159,16 @@ YouTube API は 1 日 10,000 まで無料で使えます。どちらの方式も
    - [Google アカウントの「サードパーティ製のアプリとサービス」](https://myaccount.google.com/connections) からも取り消せます
 2. わんコメでプラグインを無効にし、`%APPDATA%\onecomme\plugins\yt-live-autoset` フォルダを削除します
 3. 不要になった API キー・OAuth クライアントは、Google Cloud コンソールで削除してください
+
+## わんコメのクレジット表記について
+
+このプラグインは、わんコメの HTTP API を使います。**わんコメを無料版として使っている場合は、配信の概要欄などに、わんコメを使っていることのクレジットを書いてください**（わんコメの[利用規約](https://onecomme.com/terms)「クレジット表記について」）。
+
+- 記載例: `配信者のためのコメントアプリ「わんコメ」https://onecomme.com`
+- FANBOX でわんコメを支援している場合は任意です
+- 概要欄などの入力欄がない場合や、文字数制限が厳しい場合は書かなくてかまいません
+
+最新の条件は、わんコメの利用規約をご確認ください。
 
 ## 免責
 
