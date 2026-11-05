@@ -21,6 +21,8 @@ if (dirty !== "" && !process.argv.includes("--allow-dirty")) {
 run(process.execPath, [join(root, "node_modules", "typescript", "bin", "tsc"), "--noEmit"]);
 run(process.execPath, [join(root, "node_modules", "vitest", "vitest.mjs"), "run"]);
 run(process.execPath, [join(root, "scripts", "build.mjs")]);
+// ビルドした plugin.js で E2E（わんコメ・YouTube・Google は偽物）
+run(process.execPath, [join(root, "node_modules", "vitest", "vitest.mjs"), "run", "--config", "vitest.e2e.config.mjs"]);
 
 const name = `yt-live-autoset-${version}`;
 const stage = join(root, "dist", "package", name);

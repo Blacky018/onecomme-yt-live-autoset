@@ -215,3 +215,13 @@ API キー方式では公開の動画しか見えず、限定公開・非公開�
   - わんコメの API では、スイッチの状態しか分からず本当に接続できているかは取れないため、確実につなぎ直す方を選んだ
   - わんコメの再起動直後で、配信中の枠に正常に接続できている場合も 1 回つなぎ直す（短い切断のみ）
 - 調査のため、接続・つなぎ直し（`connected` / `reconnected`）と、状態が変わったとき（`status: ...`）を plugin.log に残すようにした。秘密の値は含めない
+
+## 13. テスト【決定 2026-11-05】
+
+- 単体テスト（`tests/`、`npm test`）: domain・app 層を偽物の部品で確かめる
+- **E2E**（`e2e/`、`npm run test:e2e`）: ビルドした `dist/yt-live-autoset/plugin.js` を、わんコメと同じく CommonJS として読み込み、`init` / `request` / `destroy` で動かす
+  - 外の世界は `e2e/fake_world.ts`（わんコメの `/api/services`・YouTube Data API・Google のトークン窓口）。`globalThis.fetch` を差し替えて向ける。ログインの戻り先（127.0.0.1 の一時サーバー）だけは本物を使い、PKCE（code_challenge と code_verifier の一致）・state の照合まで確かめる
+  - シナリオ: 初回、API キー方式、Google ログイン → ログアウト（revoke）、偽の state、ログイン切れ、予約枠 → 配信開始のつなぎ直し（11/02 のケース）、設定のオン・オフ、YouTube 以外の枠、わんコメに届かない、quota 超過、壊れた入力・保存データ、停止後に通信しない、秘密の値が応答・ログに出ないこと
+  - 0.4.0 の watcher に戻すと 11/02 のケースだけ失敗することを確認済み（テストが不具合を検出できる）
+  - `npm run package` は E2E が通らないと zip を作らない
+- 実機の確認（本物のわんコメ・YouTube）: `docs/manual_test.md`

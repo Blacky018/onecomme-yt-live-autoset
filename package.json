@@ -8,8 +8,9 @@
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run test",
-    "package": "node scripts/package.mjs"
+    "check": "npm run typecheck && npm run test && npm run test:e2e",
+    "package": "node scripts/package.mjs",
+    "test:e2e": "node scripts/build.mjs && vitest run --config vitest.e2e.config.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
