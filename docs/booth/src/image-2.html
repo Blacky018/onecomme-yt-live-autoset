@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .panel { top: 360px; height: 760px; padding: 36px 40px; }
+  .shot {
+    width: 100%; height: 300px; border-radius: 22px; overflow: hidden;
+    border: 4px solid #e3e6ee; background: #f6f6f6 url("settings_live.png") no-repeat;
+    background-size: 1032px auto; background-position: -8px -8px;
+  }
+  .cap { margin-top: 12px; text-align: center; font-weight: 700; font-size: 26px; color: var(--gray); }
+  .flow { margin-top: 30px; display: flex; flex-direction: column; gap: 22px; }
+  .item { display: flex; align-items: center; gap: 22px; }
+  .when {
+    flex: none; width: 250px; text-align: center; background: var(--main); color: #fff;
+    font-weight: 900; font-size: 30px; padding: 12px 0 14px; border-radius: 16px; line-height: 1.25;
+  }
+  .what { font-weight: 900; font-size: 36px; line-height: 1.3; }
+  .what small { display: block; font-weight: 700; font-size: 26px; color: var(--gray); }
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="no">実際の画面</span>
+    <h1>あとは自動でおまかせ</h1>
+    <p>いまの状態は、設定画面でいつでも確認できる</p>
+  </div>
+  <div class="panel">
+    <div class="shot"></div>
+    <div class="cap">プラグインの設定画面（配信が始まったとき）</div>
+    <div class="flow">
+      <div class="item"><div class="when">開始の<br>24 時間前から</div><div class="what">予約枠を先にセット<small>待機所のコメントも読める</small></div></div>
+      <div class="item"><div class="when">配信開始</div><div class="what">30 秒ほどで気づいて、つなぎ直す<small>配信のコメントにそのまま切り替わる</small></div></div>
+      <div class="item"><div class="when">配信中</div><div class="what">そのまま見守る<small>手動でオフにしたら、勝手に戻さない</small></div></div>
+    </div>
+  </div>
+  <div class="foot">非公式 ・ りーと</div>
+</body>
+</html>

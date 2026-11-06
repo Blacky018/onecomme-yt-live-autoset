@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .panel { top: 300px; height: 790px; padding: 20px 44px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 17px 6px; border-bottom: 3px solid #eef0f5; vertical-align: middle; text-align: left; }
+  tr:last-child th, tr:last-child td { border-bottom: none; }
+  th { width: 250px; }
+  th span {
+    display: inline-block; background: var(--main); color: #fff; font-weight: 900; font-size: 30px;
+    padding: 8px 18px 10px; border-radius: 14px;
+  }
+  td { font-weight: 900; font-size: 38px; line-height: 1.3; }
+  td small { display: block; font-weight: 700; font-size: 26px; color: var(--gray); }
+  .ok { color: #23944f; }
+  .free { color: var(--main); }
+  .disc {
+    position: absolute; left: 60px; right: 60px; top: 1110px; text-align: center;
+    color: #fff; font-weight: 700; font-size: 26px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="no">動作環境</span>
+    <h1>使える環境・料金</h1>
+  </div>
+  <div class="panel">
+    <table>
+      <tr><th><span>料金</span></th><td class="free">無料<small>Google Cloud も無料の範囲で使えます</small></td></tr>
+      <tr><th><span>パソコン</span></th><td>Windows</td></tr>
+      <tr><th><span>わんコメ</span></th><td>バージョン 5.2 以上</td></tr>
+      <tr><th><span>配信サイト</span></th><td>YouTube Live</td></tr>
+      <tr><th><span>見つけられる<br>配信</span></th><td><span class="ok">公開・限定公開</span><small>Google ログインの場合（API キーでは公開のみ）</small></td></tr>
+      <tr><th><span>必要なもの</span></th><td>配信しているチャンネルの<br>Google アカウント</td></tr>
+    </table>
+  </div>
+  <div class="disc">わんコメ公式・YouTube とは関係のない非公式プラグインです ・ りーと</div>
+</body>
+</html>

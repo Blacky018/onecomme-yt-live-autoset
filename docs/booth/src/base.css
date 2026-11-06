@@ -1,0 +1,38 @@
+@font-face { font-family: "NotoJP"; src: local("Noto Sans JP Black"), local("NotoSansJP-Black"); font-weight: 900; }
+@font-face { font-family: "NotoJP"; src: local("Noto Sans JP Bold"), local("NotoSansJP-Bold"); font-weight: 700; }
+:root {
+  --main: #2f6fe4;
+  --main-d: #1d4cae;
+  --bg1: #4c8cf6;
+  --bg2: #2453c4;
+  --navy: #1b2240;
+  --yellow: #ffe14d;
+  --gray: #8b8f9c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 1200px; }
+body {
+  font-family: "NotoJP", "Noto Sans JP", sans-serif;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 28px, transparent 28px 56px),
+    linear-gradient(160deg, var(--bg1) 0%, var(--main) 45%, var(--bg2) 100%);
+  color: var(--navy);
+  position: relative;
+  overflow: hidden;
+}
+.head { position: absolute; left: 0; right: 0; top: 56px; text-align: center; }
+.head .no {
+  display: inline-block; background: var(--yellow); color: var(--navy);
+  font-weight: 900; font-size: 34px; padding: 4px 22px 6px; border-radius: 999px; margin-bottom: 14px;
+}
+.head h1 {
+  font-weight: 900; font-size: 88px; line-height: 1.15; color: #fff;
+  -webkit-text-stroke: 11px var(--navy); paint-order: stroke fill;
+  text-shadow: 0 9px 0 var(--navy);
+}
+.head p { margin-top: 18px; color: var(--yellow); font-weight: 900; font-size: 42px; }
+.panel {
+  position: absolute; left: 50px; right: 50px; background: #fff; border-radius: 40px;
+  box-shadow: 0 14px 0 var(--main-d);
+}
+.foot { position: absolute; right: 40px; bottom: 18px; color: rgba(255,255,255,.92); font-weight: 700; font-size: 24px; }
