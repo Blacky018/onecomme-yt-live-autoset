@@ -77,7 +77,7 @@ https://blacky018.github.io/onecomme-yt-live-autoset/support.html
 このショップへのメッセージ（ショップページ下の「ショップへのお問い合わせ」）でも受け付けます。
 
 ■ ファイルの確認（SHA-256）
-1.0.0: 9f82defc4d2e2ea5c139e28ded1cd99aef2faf8683b0f9c302eef5811d473cdc
+1.1.0: 6acccb3a5c964edeb6f617b59cf38364f8b1788a4b80754a4d78a44ad465c829
 
 ■ 更新履歴
 ・1.1.0（2026-11-07）新しいバージョンが出たら、設定画面にお知らせを出すように
