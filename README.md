@@ -151,6 +151,7 @@ YouTube API は 1 日 10,000 まで無料で使えます。どちらの方式も
   - `oauth2.googleapis.com` / `accounts.google.com`（Google ログイン）
   - `127.0.0.1:11180`（わんコメ本体の API。枠の URL を書き換える）
   - ログインの間だけ、`127.0.0.1` の一時的なポートで Google からの戻りを受け取ります
+  - `blacky018.github.io`（新しいバージョンの確認。設定画面を開いたときだけ、最大 6 時間に 1 回。設定の「新しいバージョンが出たら、この画面でお知らせする」をオフにすると通信しません）
 
 詳しくは [プライバシーポリシー](https://blacky018.github.io/onecomme-yt-live-autoset/privacy.html) をご覧ください。
 

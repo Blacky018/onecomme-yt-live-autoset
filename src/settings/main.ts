@@ -2,6 +2,7 @@
 import { AUTH_ENDPOINT } from "../domain/oauth";
 import { isRecord } from "../domain/result";
 import { VIDEO_ID, watchUrl } from "../domain/video_url";
+import { parseVersion } from "../domain/version";
 import { PLUGIN_UID } from "../plugin_uid";
 
 const PLUGIN_API = `/api/plugins/${PLUGIN_UID}`;
@@ -18,6 +19,7 @@ const FIELD_LABEL: Record<string, string> = {
   enabled: "オン・オフの値が正しくありません",
   presetUpcoming: "オン・オフの値が正しくありません",
   autoConnectLive: "オン・オフの値が正しくありません",
+  checkUpdates: "オン・オフの値が正しくありません",
 };
 
 function el<T extends HTMLElement>(id: string): T {
@@ -54,6 +56,10 @@ const ui = {
   intervalSec: el<HTMLInputElement>("intervalSec"),
   presetUpcoming: el<HTMLInputElement>("presetUpcoming"),
   autoConnectLive: el<HTMLInputElement>("autoConnectLive"),
+  checkUpdates: el<HTMLInputElement>("checkUpdates"),
+  update: el<HTMLElement>("update"),
+  updateLatest: el<HTMLSpanElement>("update-latest"),
+  updateCurrent: el<HTMLSpanElement>("update-current"),
   save: el<HTMLButtonElement>("save"),
   check: el<HTMLButtonElement>("check"),
   message: el<HTMLParagraphElement>("message"),
@@ -78,12 +84,15 @@ interface Snapshot {
     intervalSec: number;
     presetUpcoming: boolean;
     autoConnectLive: boolean;
+    checkUpdates: boolean;
     hasApiKey: boolean;
     hasClientSecret: boolean;
     loggedIn: boolean;
   };
   status: { state: string; message: string; videoId: string | null; kind: "live" | "upcoming" | null } | null;
   login: { state: string; message: string } | null;
+  // 新しいバージョンがあるときだけ入る
+  update: { current: string; latest: string } | null;
   authUrl: string | null;
 }
 
@@ -100,6 +109,7 @@ function toSnapshot(v: unknown): Snapshot | null {
   const s = body["settings"];
   const st = body["status"];
   const lg = body["login"];
+  const up = body["update"];
   const authUrl = str(body["authUrl"]);
   return {
     settings: {
@@ -111,6 +121,7 @@ function toSnapshot(v: unknown): Snapshot | null {
       intervalSec: typeof s["intervalSec"] === "number" ? s["intervalSec"] : 30,
       presetUpcoming: s["presetUpcoming"] !== false,
       autoConnectLive: s["autoConnectLive"] !== false,
+      checkUpdates: s["checkUpdates"] !== false,
       hasApiKey: s["hasApiKey"] === true,
       hasClientSecret: s["hasClientSecret"] === true,
       loggedIn: s["loggedIn"] === true,
@@ -124,6 +135,11 @@ function toSnapshot(v: unknown): Snapshot | null {
         }
       : null,
     login: isRecord(lg) ? { state: str(lg["state"]), message: str(lg["message"]) } : null,
+    // バージョンは x.y.z の形のものだけ表示する
+    update:
+      isRecord(up) && parseVersion(up["latest"]) && parseVersion(up["current"])
+        ? { current: str(up["current"]), latest: str(up["latest"]) }
+        : null,
     // Google のログイン画面以外は開かない
     authUrl: authUrl.startsWith(`${AUTH_ENDPOINT}?`) ? authUrl : null,
   };
@@ -162,6 +178,12 @@ function render(snap: Snapshot, fillForm: boolean): void {
     ui.statusVideo.hidden = true;
   }
 
+  ui.update.hidden = snap.update === null;
+  if (snap.update) {
+    ui.updateLatest.textContent = snap.update.latest;
+    ui.updateCurrent.textContent = snap.update.current;
+  }
+
   const s = snap.settings;
   ui.apiKey.placeholder = s.hasApiKey ? "設定済み（変える時だけ入力）" : "未設定";
   ui.clearApiKeyRow.hidden = !s.hasApiKey;
@@ -184,6 +206,7 @@ function render(snap: Snapshot, fillForm: boolean): void {
     ui.intervalSec.value = String(s.intervalSec);
     ui.presetUpcoming.checked = s.presetUpcoming;
     ui.autoConnectLive.checked = s.autoConnectLive;
+    ui.checkUpdates.checked = s.checkUpdates;
     selectedServiceId = s.serviceId;
     ui.serviceId.value = selectedServiceId;
     showModeSections();
@@ -258,6 +281,7 @@ async function save(e: Event): Promise<void> {
       intervalSec: Number.isFinite(interval) ? interval : 30,
       presetUpcoming: ui.presetUpcoming.checked,
       autoConnectLive: ui.autoConnectLive.checked,
+      checkUpdates: ui.checkUpdates.checked,
     });
     const snap = toSnapshot(data);
     if (!ok || !snap) {
@@ -270,10 +294,22 @@ async function save(e: Event): Promise<void> {
     ui.clearOauthClientSecret.checked = false;
     render(snap, true);
     showMessage("保存しました");
+    if (snap.settings.checkUpdates) void checkUpdate();
   } catch {
     showMessage("保存できませんでした", true);
   } finally {
     ui.save.disabled = false;
+  }
+}
+
+// 新しいバージョンが出ていないか確かめる（オフならプラグイン側で通信しない）。失敗しても何も出さない
+async function checkUpdate(): Promise<void> {
+  try {
+    const { data } = await call("POST", { action: "checkUpdate" });
+    const snap = toSnapshot(data);
+    if (snap) render(snap, false);
+  } catch {
+    // お知らせが出ないだけ
   }
 }
 
@@ -352,4 +388,7 @@ ui.serviceId.addEventListener("change", () => {
 // 状態表示だけ 10 秒ごとに更新（入力中の値は上書きしない）
 setInterval(() => void refreshStatus().catch(() => undefined), 10_000);
 
-void load().then(loadServices);
+void load().then(() => {
+  void checkUpdate();
+  return loadServices();
+});

@@ -41,6 +41,9 @@ export class FakeWorld {
   onecommeDown = false;
   youtubeError: { status: number; reason: string } | null = null;
   tokenError: string | null = null;
+  // 公式サイトの version.json の中身（null なら 404・"down" なら通信エラー）
+  latestVersion: unknown = { version: "99.0.0" };
+  versionRequests = 0;
 
   // PKCE の確認用（oauthStart の authUrl から入れる）
   expectedChallenge = "";
@@ -87,9 +90,17 @@ export class FakeWorld {
     if (url.host === "127.0.0.1:11180") return this.onecomme(url, init);
     if (url.host === "www.googleapis.com") return this.youtube(url, init);
     if (url.host === "oauth2.googleapis.com") return this.oauth(url, init);
+    if (url.href === "https://blacky018.github.io/onecomme-yt-live-autoset/version.json") return this.version();
     if (url.hostname === "127.0.0.1" || url.hostname === "localhost") return this.realFetch(input, init);
     throw new Error(`E2E: 想定外の通信先 ${url.host}`);
   };
+
+  private version(): Response {
+    this.versionRequests++;
+    if (this.latestVersion === "down") throw new TypeError("fetch failed");
+    if (this.latestVersion === null) return json(404, {});
+    return json(200, this.latestVersion);
+  }
 
   private async onecomme(url: URL, init?: RequestInit): Promise<Response> {
     if (this.onecommeDown) throw new TypeError("fetch failed");

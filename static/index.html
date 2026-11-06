@@ -11,6 +11,12 @@
       <h1>配信枠オートセット</h1>
       <p class="lead">YouTube で配信を始めると、わんコメの YouTube 枠の URL を配信中の枠に書き換えます。わんコメ公式・YouTube とは関係のない非公式プラグインです。</p>
 
+      <section class="update" id="update" role="status" hidden>
+        <strong>新しいバージョン <span id="update-latest"></span> があります</strong>（いま使っているのは <span id="update-current"></span>）<br />
+        <a href="https://riito-lab.booth.pm/items/9099925" target="_blank" rel="noopener noreferrer">BOOTH からダウンロード</a>
+        ・ <a href="https://blacky018.github.io/onecomme-yt-live-autoset/support.html#update" target="_blank" rel="noopener noreferrer">更新のしかた</a>
+      </section>
+
       <section class="status" id="status" aria-live="polite">
         <span class="badge" id="status-badge">読み込み中</span>
         <span id="status-message"></span>
@@ -68,6 +74,9 @@
 
         <label class="inline switch-row"><input type="checkbox" id="autoConnectLive" /> 予約枠のセット時と配信開始時に、わんコメの接続を自動でオン（つなぎ直し）にする</label>
         <p class="hint">予約枠をセットしたら、接続がオフならオンにします（待機所のコメントを読むため）。配信が始まったら、接続がオフならオンにし、オンなら 1 回つなぎ直します（待機所への接続が途中で切れていても、配信開始時に必ずつながるように）。予約枠のうち・配信中それぞれ 1 回だけで、手動でオフにしたら、その間はもうオンにしません。</p>
+
+        <label class="inline switch-row"><input type="checkbox" id="checkUpdates" /> 新しいバージョンが出たら、この画面でお知らせする</label>
+        <p class="hint">この画面を開いたときに、公式サイト（blacky018.github.io）へ最新のバージョン番号を確認しに行きます。設定やログインの情報は送りません。</p>
 
         <label for="intervalSec">確認する間隔（秒）</label>
         <input type="number" id="intervalSec" min="30" max="3600" step="1" />

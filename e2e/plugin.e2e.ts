@@ -269,6 +269,65 @@ describe("E2E: 予約枠と配信開始（配布先で起きた 11/02 のケー�
   });
 });
 
+describe("E2E: 新しいバージョンのお知らせ", () => {
+  type Update = { current: string; latest: string | null } | null;
+  const updateOf = (r: PluginResponse) => r.response["update"] as Update;
+
+  it("起動しただけでは確認しない。設定画面が開かれたら確認し、新しければ知らせる", async () => {
+    const world = new FakeWorld(realFetch);
+    const app = boot(world);
+    await app.settle();
+    expect(world.versionRequests).toBe(0);
+    const r = await app.post({ action: "checkUpdate" });
+    expect(world.versionRequests).toBe(1);
+    expect(updateOf(r)).toEqual({ current: app.plugin.version, latest: "99.0.0" });
+    // 画面の 10 秒ごとの更新（GET）でもお知らせは残り、通信は増えない
+    expect(updateOf(await app.get())?.latest).toBe("99.0.0");
+    await app.post({ action: "checkUpdate" });
+    expect(world.versionRequests).toBe(1);
+  });
+
+  it("同じバージョンなら知らせない", async () => {
+    const world = new FakeWorld(realFetch);
+    const app = boot(world);
+    world.latestVersion = { version: app.plugin.version };
+    expect(updateOf(await app.post({ action: "checkUpdate" }))?.latest).toBeNull();
+  });
+
+  it("お知らせをオフにすると通信しない", async () => {
+    const world = new FakeWorld(realFetch);
+    const app = boot(world);
+    await app.put({ checkUpdates: false });
+    const r = await app.post({ action: "checkUpdate" });
+    expect(updateOf(r)).toBeNull();
+    expect(world.versionRequests).toBe(0);
+    expect(app.saved()["checkUpdates"]).toBe(false);
+  });
+
+  it("公式サイトに届かない・壊れた応答でも落ちず、何も知らせない", async () => {
+    for (const bad of ["down", null, { version: "<b>2.0.0</b>" }, "not json"]) {
+      const world = new FakeWorld(realFetch);
+      world.latestVersion = bad;
+      const app = boot(world);
+      const r = await app.post({ action: "checkUpdate" });
+      expect(r.code).toBe(200);
+      expect(updateOf(r)?.latest ?? null).toBeNull();
+      app.plugin.destroy();
+      running = null;
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("確認の通信に設定やログインの情報を付けない", async () => {
+    const world = new FakeWorld(realFetch);
+    const app = boot(world, OAUTH_SETTINGS);
+    await app.settle();
+    await app.post({ action: "checkUpdate" });
+    const sent = world.seenUrls.filter((u) => u.includes("github.io"));
+    expect(sent).toEqual(["https://blacky018.github.io/onecomme-yt-live-autoset/version.json"]);
+  });
+});
+
 describe("E2E: 困ったとき", () => {
   it("YouTube 以外の枠を選んでいたら書き換えない", async () => {
     const world = new FakeWorld(realFetch);

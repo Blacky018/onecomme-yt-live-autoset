@@ -1,6 +1,7 @@
 // わんコメ プラグインの入口。わんコメとの接続だけを書き、処理は app / infra に任せる
 import { LiveSource } from "./app/live_source";
 import { OAuthLogin } from "./app/oauth_login";
+import { UpdateChecker } from "./app/update_checker";
 import { LiveWatcher, type Timers } from "./app/watcher";
 import { isRecord } from "./domain/result";
 import { applySettingsPatch, DEFAULT_SETTINGS, loadSettings, publicSettings, type Settings } from "./domain/settings";
@@ -8,6 +9,7 @@ import { GoogleOAuth } from "./infra/google_oauth";
 import type { FetchLike } from "./infra/http";
 import { createPkce, randomState, startLoopback } from "./infra/loopback";
 import { OneCommeClient } from "./infra/onecomme_client";
+import { fetchLatestVersion } from "./infra/update_client";
 import { YouTubeClient } from "./infra/youtube_client";
 import { PLUGIN_UID } from "./plugin_uid";
 
@@ -50,6 +52,7 @@ let watcher: LiveWatcher | null = null;
 let source: LiveSource | null = null;
 let login: OAuthLogin | null = null;
 let google: GoogleOAuth | null = null;
+let updates: UpdateChecker | null = null;
 
 function save(next: Settings): void {
   settings = next;
@@ -70,6 +73,8 @@ function snapshot(extra: Record<string, unknown> = {}): unknown {
     settings: publicSettings(settings),
     status: watcher?.getStatus() ?? null,
     login: login?.getStatus() ?? null,
+    // お知らせをオフにしていれば出さない
+    update: settings.checkUpdates ? (updates?.getStatus() ?? null) : null,
     ...extra,
   };
 }
@@ -79,6 +84,10 @@ async function handlePost(body: unknown): Promise<PluginResponse> {
   switch (action) {
     case "check":
       await watcher?.checkNow();
+      return { code: 200, response: snapshot() };
+    case "checkUpdate":
+      // 設定画面を開いたときに呼ばれる。オフなら通信しない
+      if (settings.checkUpdates) await updates?.refresh();
       return { code: 200, response: snapshot() };
     case "oauthStart": {
       if (!login) return { code: 503, response: { error: "not-ready" } };
@@ -133,6 +142,7 @@ const plugin = {
       settings = loadSettings(s.get(SETTINGS_KEY));
       const fetchFn: FetchLike = (url, init) => fetch(url, init);
       google = new GoogleOAuth(fetchFn);
+      updates = new UpdateChecker(() => fetchLatestVersion(fetchFn), PLUGIN_VERSION, realTimers.now, log);
       const g = google;
       source = new LiveSource(new YouTubeClient(fetchFn), g, realTimers.now, () => {
         log("refresh token is no longer valid");
@@ -164,6 +174,7 @@ const plugin = {
   destroy(): void {
     try {
       login?.cancel();
+      updates?.stop();
       watcher?.stop();
       watcher = null;
     } catch {

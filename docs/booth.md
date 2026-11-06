@@ -50,9 +50,11 @@ https://blacky018.github.io/onecomme-yt-live-autoset/manual.html
 
 ■ 更新するとき
 新しい「yt-live-autoset」フォルダで上書きし、「再読み込み」を押してください。設定はそのまま残ります。
+1.1.0 からは、新しいバージョンが出ると設定画面にお知らせが出ます。
 
 ■ データの扱い
 このプラグインはお使いの PC の中だけで動き、利用者の情報を作者や第三者に送りません。
+新しいバージョンの確認のため、設定画面を開いたときに公式サイトのバージョン番号を読み込みます（設定でオフにできます）。
 プライバシーポリシー: https://blacky018.github.io/onecomme-yt-live-autoset/privacy.html
 本プラグインは YouTube API サービスを使用します。YouTube 利用規約（https://www.youtube.com/t/terms）と Google プライバシー ポリシー（https://policies.google.com/privacy）が適用されます。
 
@@ -78,6 +80,7 @@ https://blacky018.github.io/onecomme-yt-live-autoset/support.html
 1.0.0: 9f82defc4d2e2ea5c139e28ded1cd99aef2faf8683b0f9c302eef5811d473cdc
 
 ■ 更新履歴
+・1.1.0（2026-11-07）新しいバージョンが出たら、設定画面にお知らせを出すように
 ・1.0.0（2026-11-06）正式版（機能は 0.5.2 と同じ。説明書の画像を見やすく撮り直し）
 ・0.5.2（2026-11-05）予約枠をセットしたときも、わんコメの接続を自動でオンにするように（待機所のコメントが取れるように）
 ・0.5.1（2026-11-05）説明書に、わんコメのクレジット表記の案内と、プラグイン一覧から設定画面を開く方法を追加
