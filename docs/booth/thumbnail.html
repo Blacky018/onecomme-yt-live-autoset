@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "NotoJP"; src: local("Noto Sans JP Black"), local("NotoSansJP-Black"); font-weight: 900; }
+  @font-face { font-family: "NotoJP"; src: local("Noto Sans JP Bold"), local("NotoSansJP-Bold"); font-weight: 700; }
+  @font-face { font-family: "NotoJP"; src: local("Noto Sans JP Medium"), local("NotoSansJP-Medium"); font-weight: 500; }
+  :root {
+    --pink: #2f6fe4;
+    --pink-d: #1d4cae;
+    --bg1: #4c8cf6;
+    --bg2: #2453c4;
+    --halo: rgba(47,111,228,.2);
+    --hl: #ffe14d;
+    --chiphl: #ffe14d;
+    --navy: #1b2240;
+    --yellow: #ffe14d;
+    --gray: #8b8f9c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 1200px; }
+  body {
+    font-family: "NotoJP", "Noto Sans JP", sans-serif;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 28px, transparent 28px 56px),
+      linear-gradient(160deg, var(--bg1) 0%, var(--pink) 45%, var(--bg2) 100%);
+    color: var(--navy);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .label {
+    position: absolute; left: 60px; top: 52px;
+    background: #fff; color: var(--pink);
+    font-weight: 900; font-size: 40px; letter-spacing: .04em;
+    padding: 10px 30px 12px; border-radius: 999px;
+    box-shadow: 0 6px 0 var(--pink-d);
+  }
+  .free {
+    position: absolute; right: 38px; top: 22px;
+    width: 168px; height: 168px; border-radius: 50%;
+    background: var(--yellow); color: var(--pink-d);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    font-weight: 900; transform: rotate(10deg);
+    box-shadow: 0 8px 0 rgba(0,0,0,.18);
+    border: 8px solid #fff;
+  }
+  .free .big { font-size: 74px; line-height: 1; }
+  .free .small { font-size: 26px; line-height: 1.2; margin-top: 4px; color: var(--navy); }
+
+  .catch {
+    position: absolute; left: 0; right: 0; top: 160px; text-align: center;
+    color: #fff; font-weight: 900; font-size: 50px; letter-spacing: .06em;
+  }
+  .title {
+    position: absolute; left: 0; right: 0; top: 232px; text-align: center;
+    font-weight: 900; font-size: 120px; line-height: 1.08; letter-spacing: 0;
+    color: #fff;
+    -webkit-text-stroke: 13px var(--navy);
+    paint-order: stroke fill;
+    text-shadow: 0 12px 0 var(--navy);
+  }
+  .sub {
+    position: absolute; left: 0; right: 0; top: 404px; text-align: center;
+    color: var(--hl); font-weight: 900; font-size: 50px; letter-spacing: .04em;
+    text-shadow: 0 4px 0 var(--pink-d);
+  }
+
+  .panel {
+    position: absolute; left: 50px; right: 50px; top: 500px; height: 520px;
+    background: #fff; border-radius: 40px;
+    box-shadow: 0 14px 0 var(--pink-d);
+    display: flex; align-items: stretch; padding: 34px 30px; gap: 0;
+  }
+  .side { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .tag {
+    font-weight: 900; font-size: 38px; color: #fff; padding: 6px 30px 8px; border-radius: 14px;
+  }
+  .before .tag { background: var(--gray); }
+  .after .tag { background: var(--pink); }
+  .steps { margin-top: 26px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+  .step {
+    display: flex; align-items: center; gap: 14px;
+    background: #f1f2f5; border-radius: 16px; padding: 14px 18px;
+    font-weight: 700; font-size: 32px; color: #6b6f7c;
+  }
+  .num {
+    flex: none; width: 46px; height: 46px; border-radius: 50%; background: #c9ccd4; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 28px;
+  }
+  .sigh { margin-top: auto; font-weight: 900; font-size: 36px; color: var(--gray); }
+
+  .arrow {
+    flex: none; width: 92px; display: flex; align-items: center; justify-content: center;
+  }
+  .arrow div {
+    width: 0; height: 0; border-top: 46px solid transparent; border-bottom: 46px solid transparent;
+    border-left: 56px solid var(--pink);
+  }
+
+  .live {
+    margin-top: 26px; display: flex; align-items: center; gap: 14px;
+    font-weight: 900; font-size: 40px; color: var(--navy);
+  }
+  .dot { width: 30px; height: 30px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 8px var(--halo); }
+  .down { margin: 14px 0 10px; width: 0; height: 0; border-left: 26px solid transparent; border-right: 26px solid transparent; border-top: 30px solid var(--pink); }
+  .card {
+    width: 100%; border: 5px solid var(--pink); border-radius: 22px; padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 14px; background: #f7f9fc;
+  }
+  .row { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 30px; }
+  .row .k { flex: none; color: var(--gray); font-size: 26px; width: 76px; }
+  .url {
+    flex: 1; background: #fff; border: 3px solid #e3e5ea; border-radius: 12px; padding: 6px 12px;
+    font-size: 25px; color: var(--navy); white-space: nowrap; overflow: hidden;
+  }
+  .url b { color: var(--pink); }
+  .toggle { width: 86px; height: 46px; border-radius: 999px; background: #3dbb6c; position: relative; flex: none; }
+  .toggle::after { content: ""; position: absolute; right: 5px; top: 5px; width: 36px; height: 36px; border-radius: 50%; background: #fff; }
+  .on { font-weight: 900; color: #2f9e5a; font-size: 32px; }
+  .yay { margin-top: auto; font-weight: 900; font-size: 40px; color: var(--pink); }
+
+  .chips {
+    position: absolute; left: 0; right: 0; top: 1062px;
+    display: flex; justify-content: center; gap: 18px;
+  }
+  .chip {
+    background: var(--navy); color: #fff; font-weight: 900; font-size: 36px;
+    padding: 12px 28px 14px; border-radius: 999px;
+  }
+  .chip em { font-style: normal; color: var(--chiphl); }
+  .foot {
+    position: absolute; right: 40px; bottom: 18px; color: rgba(255,255,255,.9);
+    font-weight: 700; font-size: 24px;
+  }
+</style>
+</head>
+<body>
+  <div class="label">わんコメ用プラグイン</div>
+  <div class="free"><span class="big">無料</span></div>
+
+  <div class="catch">YouTube で配信を始めるだけで</div>
+  <div class="title">配信枠オートセット</div>
+  <div class="sub">わんコメの枠 URL が自動で切り替わる！</div>
+
+  <div class="panel">
+    <div class="side before">
+      <div class="tag">これまで</div>
+      <div class="steps">
+        <div class="step"><span class="num">1</span>配信の URL をコピー</div>
+        <div class="step"><span class="num">2</span>わんコメに貼りつけ</div>
+        <div class="step"><span class="num">3</span>接続をオンにする</div>
+      </div>
+      <div class="sigh">毎回、手作業…</div>
+    </div>
+    <div class="arrow"><div></div></div>
+    <div class="side after">
+      <div class="tag">これから</div>
+      <div class="live"><span class="dot"></span>配信開始</div>
+      <div class="down"></div>
+      <div class="card">
+        <div class="row"><span class="k">URL</span><span class="url">…/watch?v=<b>今日の配信</b></span></div>
+        <div class="row"><span class="k">接続</span><span class="toggle"></span><span class="on">ON</span></div>
+      </div>
+      <div class="yay">ぜんぶ自動！</div>
+    </div>
+  </div>
+
+  <div class="chips">
+    <span class="chip"><em>予約枠</em>も先取り</span>
+    <span class="chip"><em>限定公開</em>も OK</span>
+    <span class="chip">設定は<em>最初だけ</em></span>
+  </div>
+  <div class="foot">非公式 ・ りーと</div>
+</body>
+</html>
